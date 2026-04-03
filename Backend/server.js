@@ -44,6 +44,25 @@ app.get('/api/stats', async (req, res) => {
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
+// Root route — API index
+app.get('/', (req, res) => {
+  res.json({
+    name: 'KenyaWatch API',
+    description: 'Government contract and project monitoring system',
+    version: '1.0.0',
+    endpoints: {
+      'GET /health':          'Health check',
+      'GET /api/stats':       'Dashboard statistics',
+      'GET /api/contracts':   'List contracts',
+      'POST /api/contracts':  'Create contract',
+      'GET /api/reports':     'List reports',
+      'POST /api/reports':    'Submit report',
+      'GET /api/ghost-projects':  'List ghost projects',
+      'POST /api/ai':         'AI analysis endpoint'
+    }
+  });
+});
+
 app.use(notFound);
 app.use(errorHandler);
 
