@@ -5,4 +5,4 @@ nixPkgs = ["nodejs_20", "npm-9_x"]
 cmds = ["npm install"]
 
 [start]
-cmd = "node backend/server.js"
+cmd = "node Backend/server.js"
