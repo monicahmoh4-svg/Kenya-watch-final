@@ -7,7 +7,7 @@ const path     = require('path');
 const rateLimit = require('express-rate-limit');
 const { initDB, pool } = require('./db');
 const { logger, errorHandler, notFound } = require('./middleware');
-app.use('/api/chatbot', require('./routes/chatbot'));
+app.use('/api/chatbot', require('./contracts.js/reports.js/ghostProjects.js/ai.js/chatbot'));
 
 const app  = express();
 // Trust Railway proxy
