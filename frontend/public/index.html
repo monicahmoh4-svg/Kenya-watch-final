@@ -577,5 +577,180 @@ function showFb(el, msg, type) {
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 loadStats();
 </script>
+  <!-- ═══════════════════════════════════════════════════════════════════
+     KENYAWATCH AI CHATBOT WIDGET
+     Paste ALL of this just before the closing </body> tag in index.html
+     It works automatically — no other changes needed.
+════════════════════════════════════════════════════════════════════ -->
+
+<style>
+#kw-trigger{position:fixed;bottom:24px;right:24px;width:60px;height:60px;background:#00c853;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(0,200,83,.4);z-index:9999;transition:transform .2s,box-shadow .2s}
+#kw-trigger:hover{transform:scale(1.08);box-shadow:0 6px 28px rgba(0,200,83,.55)}
+#kw-trigger svg{width:28px;height:28px;fill:#000}
+#kw-badge{position:absolute;top:-4px;right:-4px;background:#ff4444;color:#fff;border-radius:50%;width:18px;height:18px;font-size:10px;font-weight:700;display:none;align-items:center;justify-content:center}
+#kw-window{position:fixed;bottom:96px;right:24px;width:380px;height:560px;background:#111618;border:1px solid #1f2a2d;border-radius:16px;display:flex;flex-direction:column;z-index:9999;transform:scale(.9) translateY(20px);opacity:0;pointer-events:none;transition:transform .25s cubic-bezier(.34,1.56,.64,1),opacity .2s;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+#kw-window.open{transform:scale(1) translateY(0);opacity:1;pointer-events:all}
+#kw-header{background:#0d4a27;border-radius:16px 16px 0 0;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #1a3a20;flex-shrink:0}
+.kw-hl{display:flex;align-items:center;gap:10px}
+.kw-av{width:38px;height:38px;background:#00c853;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#000;flex-shrink:0;position:relative}
+.kw-on{position:absolute;bottom:1px;right:1px;width:10px;height:10px;background:#00e676;border-radius:50%;border:2px solid #0d4a27}
+.kw-ttl{font-weight:700;font-size:14px;color:#fff}
+.kw-sub{font-size:11px;color:#9fe1cb}
+.kw-acts{display:flex;gap:6px}
+.kw-xb{background:rgba(0,0,0,.3);border:none;color:#9fe1cb;width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.kw-xb:hover{background:rgba(0,0,0,.5);color:#fff}
+#kw-quick{display:flex;gap:6px;padding:10px 12px;overflow-x:auto;flex-shrink:0;border-bottom:1px solid #1f2a2d;scrollbar-width:none}
+#kw-quick::-webkit-scrollbar{display:none}
+.kw-qr{white-space:nowrap;background:#0d4a27;border:1px solid #1b6b3a;color:#9fe1cb;font-size:11px;padding:5px 10px;border-radius:20px;cursor:pointer;transition:background .15s;flex-shrink:0}
+.kw-qr:hover{background:#1b6b3a;color:#fff}
+#kw-msgs{flex:1;overflow-y:auto;padding:14px 12px;display:flex;flex-direction:column;gap:10px;scrollbar-width:thin;scrollbar-color:#1f2a2d transparent}
+#kw-msgs::-webkit-scrollbar{width:4px}
+#kw-msgs::-webkit-scrollbar-thumb{background:#1f2a2d;border-radius:2px}
+.kw-m{display:flex;gap:8px;animation:kwf .25s ease}
+@keyframes kwf{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.kw-m.u{flex-direction:row-reverse}
+.kw-b{max-width:78%;padding:10px 13px;border-radius:14px;font-size:13px;line-height:1.55}
+.kw-m.a .kw-b{background:#141a1c;border:1px solid #1f2a2d;border-bottom-left-radius:4px;color:#e8f0f2}
+.kw-m.a .kw-b strong{color:#00c853}
+.kw-m.u .kw-b{background:#00c853;color:#000;font-weight:500;border-bottom-right-radius:4px}
+.kw-sm{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;margin-top:2px}
+.kw-m.a .kw-sm{background:#0d4a27;color:#00c853}
+.kw-m.u .kw-sm{background:#005c2a;color:#00c853}
+.kw-t{font-size:10px;color:#4a6570;margin-top:2px;text-align:right}
+.kw-m.a .kw-t{text-align:left}
+#kw-typing{display:none;align-items:center;gap:8px;padding:2px 0}
+#kw-typing.show{display:flex}
+.kw-d{width:7px;height:7px;background:#00c853;border-radius:50%;animation:kwb 1.2s infinite}
+.kw-d:nth-child(2){animation-delay:.2s}
+.kw-d:nth-child(3){animation-delay:.4s}
+@keyframes kwb{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+#kw-foot{padding:10px 12px;border-top:1px solid #1f2a2d;display:flex;gap:8px;flex-shrink:0}
+#kw-inp{flex:1;background:#0a0e0f;border:1px solid #1f2a2d;border-radius:10px;color:#e8f0f2;font-size:13px;padding:9px 13px;outline:none;transition:border-color .2s;resize:none;height:38px;font-family:inherit}
+#kw-inp:focus{border-color:#00c853}
+#kw-inp::placeholder{color:#4a6570}
+#kw-snd{width:38px;height:38px;background:#00c853;border:none;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s,transform .15s;flex-shrink:0}
+#kw-snd:hover{background:#00e676;transform:scale(1.05)}
+#kw-snd:disabled{background:#1f2a2d;cursor:not-allowed;transform:none}
+#kw-snd svg{width:16px;height:16px;fill:#000}
+#kw-pwr{text-align:center;padding:6px;font-size:10px;color:#4a6570;border-top:1px solid #1a1f20;flex-shrink:0}
+@media(max-width:440px){#kw-window{width:calc(100vw - 16px);right:8px;bottom:84px;height:75vh}}
+</style>
+
+<!-- Trigger button -->
+<button id="kw-trigger" onclick="kwToggle()" aria-label="Chat with KenyaWatch AI">
+  <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>
+  <span id="kw-badge"></span>
+</button>
+
+<!-- Chat window -->
+<div id="kw-window">
+  <div id="kw-header">
+    <div class="kw-hl">
+      <div class="kw-av">AI<div class="kw-on"></div></div>
+      <div><div class="kw-ttl">KenyaWatch AI</div><div class="kw-sub">Anti-Corruption Assistant · Online</div></div>
+    </div>
+    <div class="kw-acts">
+      <button class="kw-xb" onclick="kwClear()" title="Clear">&#x1F5D1;</button>
+      <button class="kw-xb" onclick="kwToggle()" title="Close">&#x2715;</button>
+    </div>
+  </div>
+  <div id="kw-quick">
+    <button class="kw-qr" onclick="kwQ('How do I report corruption?')">Report corruption</button>
+    <button class="kw-qr" onclick="kwQ('Show me high-risk contracts')">High-risk contracts</button>
+    <button class="kw-qr" onclick="kwQ('What are ghost projects?')">Ghost projects</button>
+    <button class="kw-qr" onclick="kwQ('How does AI scoring work?')">AI scoring</button>
+    <button class="kw-qr" onclick="kwQ('EACC contact details')">EACC contacts</button>
+    <button class="kw-qr" onclick="kwQ('Which counties have highest corruption risk?')">County risk</button>
+  </div>
+  <div id="kw-msgs">
+    <div class="kw-m a">
+      <div class="kw-sm">AI</div>
+      <div>
+        <div class="kw-b"><strong>Habari! I'm KenyaWatch AI</strong> 👋<br><br>I'm your anti-corruption intelligence assistant for Kenya.<br><br>I can help you report corruption anonymously, analyse government contracts, track ghost projects, and connect you to <strong>EACC, DPP, or PPRA</strong>.<br><br>What would you like to do?</div>
+        <div class="kw-t">Now</div>
+      </div>
+    </div>
+    <div id="kw-typing" class="kw-m a">
+      <div class="kw-sm">AI</div>
+      <div class="kw-b" style="padding:12px 16px"><div style="display:flex;gap:5px"><div class="kw-d"></div><div class="kw-d"></div><div class="kw-d"></div></div></div>
+    </div>
+  </div>
+  <div id="kw-foot">
+    <textarea id="kw-inp" placeholder="Ask about contracts, corruption, or reporting..." rows="1"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();kwSend()}"
+      oninput="this.style.height='38px';this.style.height=Math.min(this.scrollHeight,100)+'px'"></textarea>
+    <button id="kw-snd" onclick="kwSend()"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
+  </div>
+  <div id="kw-pwr">Powered by Claude AI &nbsp;·&nbsp; KenyaWatch AI v2.0</div>
+</div>
+
+<script>
+(function(){
+  const API = (window.KENYAWATCH_API || window.location.origin) + '/api/chatbot/message';
+  const SID = 'kw_' + Math.random().toString(36).slice(2,10);
+  let open=false, busy=false, unread=0;
+
+  window.kwToggle=function(){
+    open=!open;
+    document.getElementById('kw-window').classList.toggle('open',open);
+    if(open){unread=0;const b=document.getElementById('kw-badge');b.style.display='none';setTimeout(()=>document.getElementById('kw-inp').focus(),300);}
+  };
+
+  window.kwSend=async function(){
+    const inp=document.getElementById('kw-inp');
+    const txt=inp.value.trim();
+    if(!txt||busy)return;
+    inp.value='';inp.style.height='38px';
+    kwAdd('u',txt);kwTyping(true);busy=true;
+    document.getElementById('kw-snd').disabled=true;
+    try{
+      const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:txt,session_id:SID})});
+      const d=await r.json();
+      kwTyping(false);
+      kwAdd('a',d.success?d.reply:'Sorry, something went wrong. Please try again.',d.fallback);
+    }catch(e){
+      kwTyping(false);
+      kwAdd('a',kwFb(txt),true);
+    }
+    busy=false;document.getElementById('kw-snd').disabled=false;document.getElementById('kw-inp').focus();
+  };
+
+  window.kwQ=function(t){document.getElementById('kw-inp').value=t;kwSend();if(!open)kwToggle();};
+
+  window.kwClear=function(){
+    const m=document.getElementById('kw-msgs'),ty=document.getElementById('kw-typing');
+    Array.from(m.children).forEach(el=>{if(el!==ty)el.remove();});
+    kwAdd('a','**Chat cleared.** How can I help you?');
+    fetch((window.KENYAWATCH_API||window.location.origin)+'/api/chatbot/history/'+SID,{method:'DELETE'}).catch(()=>{});
+  };
+
+  function kwAdd(role,text,fb=false){
+    const m=document.getElementById('kw-msgs'),ty=document.getElementById('kw-typing');
+    const d=document.createElement('div');d.className='kw-m '+role;
+    const t=new Date().toLocaleTimeString('en-KE',{hour:'2-digit',minute:'2-digit'});
+    const f=text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+    d.innerHTML=`<div class="kw-sm">${role==='a'?'AI':'You'}</div><div><div class="kw-b">${f}</div><div class="kw-t">${t}${fb?' · offline':''}</div></div>`;
+    m.insertBefore(d,ty);m.scrollTop=m.scrollHeight;
+    if(role==='a'&&!open){unread++;const b=document.getElementById('kw-badge');b.textContent=unread;b.style.display='flex';}
+  }
+
+  function kwTyping(s){
+    const ty=document.getElementById('kw-typing'),m=document.getElementById('kw-msgs');
+    ty.classList.toggle('show',s);if(s)m.scrollTop=m.scrollHeight;
+  }
+
+  function kwFb(msg){
+    const m=msg.toLowerCase();
+    if(m.includes('report')||m.includes('bribe')||m.includes('corruption'))return '📋 Use the **Report** section in the app, or call **EACC: 0800 720 880** (free, 24/7). Your identity is fully protected.';
+    if(m.includes('contract')||m.includes('procurement'))return 'Go to **📋 Procurement** to scan and view government contracts with AI risk scores.';
+    if(m.includes('ghost')||m.includes('satellite'))return 'Check **👻 Ghost Projects** to see satellite-verified infrastructure detections.';
+    return '⚠️ Connection issue. Try again or call **EACC: 0800 720 880**';
+  }
+
+  setTimeout(()=>{if(!open){unread=1;const b=document.getElementById('kw-badge');b.textContent='1';b.style.display='flex';}},3000);
+})();
+</script>
+
+<!-- ═══ END CHATBOT WIDGET ═══ -->
 </body>
 </html>
