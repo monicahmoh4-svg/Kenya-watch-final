@@ -1,180 +1,141 @@
 'use strict';
 const router = require('express').Router();
+const https  = require('https');
 const { pool } = require('../db');
-const { safeJSON } = require('../utils/helpers');
 
-let anthropic;
-try {
-  const client = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || ''
-});
-  anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-} catch (e) {
-  console.warn('Anthropic SDK not initialised — AI chat will return fallback responses');
-}
+function safeJSON(v){try{return Array.isArray(v)?v:JSON.parse(v||'[]');}catch{return[];}}
 
-const SYSTEM_PROMPT = `You are KenyaWatch AI, Kenya's premier anti-corruption intelligence assistant with real-time access to Kenya's government procurement database.
+const SYSTEM = `You are KenyaWatch AI, Kenya's premier anti-corruption intelligence assistant with real-time database access.
 
-Your expertise covers:
+You have deep expertise in:
 - Kenya's Public Procurement and Asset Disposal Act (2015, amended 2025)
-- Ethics and Anti-Corruption Commission (EACC) processes
-- Director of Public Prosecutions (DPP) referral procedures  
-- Public Procurement Regulatory Authority (PPRA) oversight
-- Kenya Revenue Authority (KRA) tax compliance for suppliers
-- County government procurement under the County Governments Act
-- World Bank, AFDB, EU procurement standards applicable in Kenya
-- M-Pesa and digital financial fraud patterns
+- Ethics and Anti-Corruption Commission (EACC) — 0800 720 880
+- Director of Public Prosecutions (DPP) — corruption@dpp.go.ke
+- Public Procurement Regulatory Authority (PPRA) — ppra.go.ke
+- County Governments Act and devolved procurement
+- Kenya Revenue Authority supplier compliance
+- World Bank, AFDB, EU procurement standards
+- Satellite ghost project detection methodology
 
-When database context is provided, analyse it thoroughly and cite specific contracts, case numbers, or project names.
-Be concise, factual, and Kenya-specific. Use **bold** for key figures and entities.
-Always end with a clear, actionable recommendation.
-Keep responses under 350 words unless deep analysis is explicitly requested.`;
+Rules:
+- Be concise (under 250 words unless deep analysis requested)
+- Use **bold** for key names, figures, entities
+- Always end with one clear action
+- Cite specific contract IDs or case numbers from context when relevant
+- Respond in user's language (English or Kiswahili)`;
 
-// Build DB context for AI
-async function buildContext() {
+async function getDBContext() {
   try {
-    const [stats, highRisk, reports, ghosts] = await Promise.all([
-      pool.query(`SELECT COUNT(*) AS contracts, SUM(CASE WHEN risk_level='HIGH' THEN 1 ELSE 0 END) AS high_risk, COALESCE(SUM(value) FILTER (WHERE risk_level='HIGH'),0) AS flagged_value FROM contracts`),
-      pool.query(`SELECT contract_id, description, county, value, supplier, risk_score, flags FROM contracts WHERE risk_level='HIGH' ORDER BY risk_score DESC LIMIT 8`),
-      pool.query(`SELECT case_number, type, county, status, ai_credibility_score FROM reports ORDER BY created_at DESC LIMIT 6`),
-      pool.query(`SELECT project_name, county, detection_status, amount_at_risk, confidence_score FROM ghost_projects WHERE detection_status IN ('ghost','partial') LIMIT 6`),
+    const [stats,high,reports,ghosts] = await Promise.all([
+      pool.query(`SELECT COUNT(*) AS total,COUNT(*) FILTER (WHERE risk_level='HIGH') AS high_risk,COALESCE(SUM(value) FILTER (WHERE risk_level='HIGH'),0) AS flagged FROM contracts`),
+      pool.query(`SELECT contract_id,description,county,value,supplier,risk_score,flags FROM contracts WHERE risk_level='HIGH' ORDER BY risk_score DESC LIMIT 6`),
+      pool.query(`SELECT case_number,type,county,status,ai_credibility_score FROM reports ORDER BY created_at DESC LIMIT 5`),
+      pool.query(`SELECT project_name,county,detection_status,amount_at_risk,confidence_score FROM ghost_projects WHERE detection_status IN ('ghost','partial') LIMIT 5`),
     ]);
+    const s=stats.rows[0];
+    return `=== LIVE DATABASE ===
+Stats: ${s.total} contracts, ${s.high_risk} HIGH RISK, KES ${(s.flagged/1e9).toFixed(2)}B flagged
 
-    const s = stats.rows[0];
-    return `
-=== LIVE KENYAWATCH DATABASE CONTEXT ===
-Platform stats: ${s.contracts} contracts monitored, ${s.high_risk} high-risk (KES ${(s.flagged_value/1e9).toFixed(2)}B at risk)
+HIGH-RISK CONTRACTS:
+${high.rows.map(c=>`• ${c.contract_id} | ${c.description} | ${c.county} | KES ${(c.value/1e6).toFixed(0)}M | Score:${c.risk_score} | ${safeJSON(c.flags).slice(0,2).join('; ')}`).join('\n')}
 
-TOP HIGH-RISK CONTRACTS:
-${highRisk.rows.map(c => `• ${c.contract_id} | ${c.description} | ${c.county} | KES ${(c.value/1e6).toFixed(0)}M | Score: ${c.risk_score}/100 | Supplier: ${c.supplier} | Flags: ${safeJSON(c.flags).slice(0,2).join('; ')}`).join('\n')}
+RECENT REPORTS:
+${reports.rows.map(r=>`• ${r.case_number} | ${r.type} | ${r.county||'N/A'} | ${r.status} | Credibility:${r.ai_credibility_score}`).join('\n')}
 
-RECENT CITIZEN REPORTS:
-${reports.rows.map(r => `• ${r.case_number} | ${r.type} | ${r.county||'N/A'} | Status: ${r.status} | Credibility: ${r.ai_credibility_score}/100`).join('\n')}
-
-GHOST PROJECTS DETECTED:
-${ghosts.rows.map(g => `• ${g.project_name} | ${g.county} | ${g.detection_status.toUpperCase()} | KES ${(g.amount_at_risk/1e6).toFixed(0)}M at risk | Confidence: ${g.confidence_score}%`).join('\n')}
-========================================`;
-  } catch {
-    return '=== Database context temporarily unavailable ===';
-  }
+GHOST PROJECTS:
+${ghosts.rows.map(g=>`• ${g.project_name} | ${g.county} | ${g.detection_status.toUpperCase()} | KES ${(g.amount_at_risk/1e6).toFixed(0)}M | Confidence:${g.confidence_score}%`).join('\n')}
+====================`;
+  } catch { return '=== DB context unavailable ==='; }
 }
 
-// POST /api/ai/chat — main chat endpoint
-router.post('/chat', async (req, res, next) => {
-  try {
-    const { message, session_id } = req.body;
-    if (!message || !message.trim()) {
-      return res.status(400).json({ success: false, error: 'message is required' });
-    }
+function callClaude(messages, systemWithContext) {
+  return new Promise((resolve) => {
+    const key = process.env.ANTHROPIC_API_KEY;
+    if (!key) return resolve({ ok: false, text: getFallback(messages[messages.length-1]?.content||'') });
 
-    // Log user message
-    if (session_id) {
-      pool.query('INSERT INTO chat_logs (session_id, role, content) VALUES ($1,$2,$3)', [session_id, 'user', message]).catch(() => {});
-    }
-
-    // Check API key
-    if (!process.env.ANTHROPIC_API_KEY || !anthropic) {
-      return res.json({
-        success: true,
-        reply: '**KenyaWatch AI is ready**, but the AI API key has not been configured on this server.\n\nTo enable AI chat:\n1. Go to console.anthropic.com and generate an API key\n2. In Railway dashboard → backend service → Variables → add `ANTHROPIC_API_KEY` = your key\n3. Railway will redeploy automatically\n\nThe rest of the platform (contracts, reports, ghost projects) is fully operational.',
-        fallback: true,
+    const body = JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:800, system:systemWithContext, messages });
+    const opts = {
+      hostname:'api.anthropic.com', path:'/v1/messages', method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','Content-Length':Buffer.byteLength(body)}
+    };
+    const req = https.request(opts, res => {
+      let data='';
+      res.on('data',c=>data+=c);
+      res.on('end',()=>{
+        try {
+          const p=JSON.parse(data);
+          if(p.error) return resolve({ok:false,text:getFallback('',p.error.message)});
+          resolve({ok:true,text:p.content?.map(b=>b.text||'').join('')||''});
+        } catch { resolve({ok:false,text:getFallback('')}); }
       });
-    }
-
-    const dbContext = await buildContext();
-
-    const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1000,
-      system: SYSTEM_PROMPT + '\n\n' + dbContext,
-      messages: [{ role: 'user', content: message }],
     });
+    req.on('error',()=>resolve({ok:false,text:getFallback('')}));
+    req.setTimeout(25000,()=>{req.destroy();resolve({ok:false,text:'Request timed out. Please try again.'});});
+    req.write(body); req.end();
+  });
+}
 
-    const reply = response.content.map(b => b.text || '').join('');
+function getFallback(msg, errMsg='') {
+  if(errMsg.includes('401')||errMsg.includes('API key')) return '⚠️ AI needs configuration. Ask admin to add **ANTHROPIC_API_KEY** in Railway environment variables.';
+  const m=(msg||'').toLowerCase();
+  if(m.includes('report')||m.includes('bribe')||m.includes('corruption')) return 'To report corruption:\n\n1. Click **🚨 Report** in the navigation\n2. Fill in details anonymously — identity never stored\n3. AI routes to **EACC, DPP or PPRA** automatically\n\n**EACC Hotline: 0800 720 880** (free, 24/7)';
+  if(m.includes('contract')||m.includes('procurement')) return 'To analyse contracts:\n\n1. Go to **📋 Procurement** tab\n2. Click **+ Scan Contract**\n3. AI scores 0-100 with specific red flags\n\n**75-100 = HIGH RISK** — auto-escalated to EACC';
+  if(m.includes('ghost')||m.includes('satellite')) return '**Ghost Project Detection** uses Sentinel-2 satellite imagery:\n\n• **GHOST** — No structure exists\n• **PARTIAL** — Incomplete despite payment\n• **VERIFIED** — Construction confirmed\n\nCheck **👻 Ghost Projects** tab for all detections.';
+  if(m.includes('hello')||m.includes('hi')||m.includes('habari')) return '**Habari! I\'m KenyaWatch AI** 👋\n\nI can help you:\n• Report corruption anonymously\n• Analyse government contracts\n• Track ghost infrastructure projects\n• Connect to EACC, DPP, PPRA\n\nWhat would you like to investigate?';
+  return 'I\'m **KenyaWatch AI** — your anti-corruption assistant for Kenya.\n\nAsk me about contracts, corruption patterns, ghost projects, or how to report corruption safely.\n\n**EACC: 0800 720 880**';
+}
 
-    // Log AI reply
-    if (session_id) {
-      pool.query('INSERT INTO chat_logs (session_id, role, content, metadata) VALUES ($1,$2,$3,$4)',
-        [session_id, 'assistant', reply, JSON.stringify({ model: response.model, tokens: response.usage })]
-      ).catch(() => {});
-    }
+// Session store
+const sessions = new Map();
+function getHist(sid){return sessions.get(sid)||[];}
+function addHist(sid,role,content){
+  const h=getHist(sid);h.push({role,content});
+  while(h.length>20)h.shift();
+  sessions.set(sid,h);
+}
 
-    res.json({ success: true, reply });
-  } catch (err) {
-    // Specific error for API key issues
-    if (err.status === 401 || err.message?.includes('API key')) {
-      return res.json({
-        success: true,
-        reply: '**AI service configuration error.** The ANTHROPIC_API_KEY environment variable is missing or invalid.\n\nPlease add it in Railway → backend service → Variables tab:\n`ANTHROPIC_API_KEY = sk-ant-...`\n\nAll other platform features are working normally.',
-        fallback: true,
-      });
-    }
-    next(err);
+router.post('/chat', async (req,res) => {
+  try {
+    const {message,session_id}=req.body;
+    if(!message?.trim()) return res.status(400).json({success:false,error:'message required'});
+    const sid=session_id||'default';
+    const msg=message.trim().slice(0,1000);
+    addHist(sid,'user',msg);
+    const dbCtx=await getDBContext();
+    const {ok,text}=await callClaude(getHist(sid), SYSTEM+'\n\n'+dbCtx);
+    addHist(sid,'assistant',text);
+    if(session_id) pool.query('INSERT INTO chat_logs (session_id,role,content) VALUES ($1,$2,$3)',[sid,'assistant',text]).catch(()=>{});
+    res.json({success:true,reply:text,fallback:!ok,session_id:sid});
+  } catch(e) {
+    res.json({success:true,reply:getFallback(req.body?.message||''),fallback:true});
   }
 });
 
-// POST /api/ai/analyse-contract — deep contract analysis
-router.post('/analyse-contract', async (req, res, next) => {
+router.post('/analyse-contract', async (req,res) => {
   try {
-    const { contract_id } = req.body;
-    if (!contract_id) return res.status(400).json({ success: false, error: 'contract_id is required' });
-
-    const { rows } = await pool.query('SELECT * FROM contracts WHERE contract_id=$1 OR id=$1::integer', [contract_id]);
-    if (!rows.length) return res.status(404).json({ success: false, error: 'Contract not found' });
-    const c = { ...rows[0], flags: safeJSON(rows[0].flags) };
-
-    // Check API
-    if (!process.env.ANTHROPIC_API_KEY || !anthropic) {
-      return res.json({ success: true, data: c, analysis: 'AI analysis unavailable — ANTHROPIC_API_KEY not set', fallback: true });
-    }
-
-    const prompt = `Analyse this Kenya government contract for corruption risk:
-
-Contract: ${c.contract_id}
-Description: ${c.description}
-County: ${c.county} | Sector: ${c.sector}
-Value: KES ${(c.value/1e6).toFixed(1)}M
-Supplier: ${c.supplier}
-Bid Type: ${c.bid_type}
-Awarded: ${c.awarded_date}
-AI Risk Score: ${c.risk_score}/100 (${c.risk_level})
-Flags detected: ${c.flags.join('; ')}
-Procuring Entity: ${c.procuring_entity}
-
-Provide: 1) Risk summary 2) Most concerning flags 3) Investigation priority 4) Recommended oversight action`;
-
-    const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 800,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: prompt }],
-    });
-
-    const analysis = response.content.map(b => b.text || '').join('');
-    res.json({ success: true, data: c, analysis });
-  } catch (err) { next(err); }
+    const {contract_id}=req.body;
+    if(!contract_id) return res.status(400).json({success:false,error:'contract_id required'});
+    const {rows}=await pool.query('SELECT * FROM contracts WHERE contract_id=$1 OR id::text=$1',[contract_id]);
+    if(!rows.length) return res.status(404).json({success:false,error:'Contract not found'});
+    const c={...rows[0],flags:safeJSON(rows[0].flags)};
+    const dbCtx=await getDBContext();
+    const prompt=`Deep analysis of contract ${c.contract_id}: ${c.description} | ${c.county} | KES ${(c.value/1e6).toFixed(1)}M | Supplier: ${c.supplier} | Bid: ${c.bid_type} | Risk: ${c.risk_score}/100 (${c.risk_level}) | Flags: ${c.flags.join('; ')}. Provide: 1) Risk summary 2) Key concerns 3) Recommended action`;
+    const {ok,text}=await callClaude([{role:'user',content:prompt}],SYSTEM+'\n\n'+dbCtx);
+    res.json({success:true,data:c,analysis:text,fallback:!ok});
+  } catch(e){res.status(500).json({success:false,error:e.message});}
 });
 
-// GET /api/ai/history/:session_id — chat history
-router.get('/history/:session_id', async (req, res, next) => {
-  try {
-    const { rows } = await pool.query(
-      'SELECT role, content, created_at FROM chat_logs WHERE session_id=$1 ORDER BY created_at ASC LIMIT 100',
-      [req.params.session_id]
-    );
-    res.json({ success: true, data: rows });
-  } catch (err) { next(err); }
+router.get('/history/:session_id', (req,res) => {
+  res.json({success:true,data:getHist(req.params.session_id)});
+});
+
+router.delete('/history/:session_id', (req,res) => {
+  sessions.delete(req.params.session_id);
+  res.json({success:true,message:'Cleared'});
+});
+
+router.get('/status', (req,res) => {
+  res.json({success:true,ai_enabled:!!process.env.ANTHROPIC_API_KEY,sessions:sessions.size});
 });
 
 module.exports = router;
-} catch (e) {
-  console.error('AI chat error:', e.message);
-  
-  // Check if it's an API key error
-  if (e.message.includes('authentication') || e.message.includes('apiKey')) {
-    return errorResponse(res, 503, 'AI service not configured — ANTHROPIC_API_KEY missing', 'AI_NOT_CONFIGURED');
-  }
-  
-  const fallback = generateFallbackResponse(message);
-  res.json({ success: true, reply: fallback, fallback: true });
-}
