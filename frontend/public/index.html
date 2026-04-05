@@ -2,148 +2,283 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KenyaWatch AI — Anti-Corruption Platform</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KenyaWatch AI — Anti-Corruption Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0a0e0f;--bg2:#111618;--bg3:#181e20;--card:#141a1c;--border:#1f2a2d;--border2:#263035;--green:#00e676;--green2:#00c853;--gdim:rgba(0,230,118,0.08);--red:#ff4444;--rdim:rgba(255,68,68,0.1);--amber:#ffb300;--adim:rgba(255,179,0,0.1);--blue:#29b6f6;--bdim:rgba(41,182,246,0.1);--text:#e8f0f2;--t2:#8fa8af;--t3:#4a6570;--head:'Syne',sans-serif;--mono:'Space Mono',monospace;--body:'DM Sans',sans-serif}
+:root{
+  --bg:#030608;--bg2:#080d10;--bg3:#0d1518;--card:#0f1a1d;--card2:#121f23;
+  --border:#162028;--border2:#1d2d35;
+  --green:#00e676;--gd:#00c853;--gdim:rgba(0,230,118,.07);--gglow:rgba(0,230,118,.18);
+  --red:#ff4444;--rdim:rgba(255,68,68,.1);
+  --amber:#ffb300;--adim:rgba(255,179,0,.1);
+  --blue:#29b6f6;--bdim:rgba(41,182,246,.1);
+  --purple:#ce93d8;--pdim:rgba(206,147,216,.1);
+  --text:#dce8ec;--t2:#6b8f99;--t3:#2d4a54;
+  --head:'Syne',sans-serif;--mono:'Space Mono',monospace;--body:'Inter',sans-serif;
+}
 *{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
 body{background:var(--bg);color:var(--text);font-family:var(--body);min-height:100vh;overflow-x:hidden}
-.topbar{position:sticky;top:0;z-index:100;background:rgba(10,14,15,0.95);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:60px}
-.logo{font-family:var(--head);font-weight:800;font-size:18px;display:flex;align-items:center;gap:10px}
-.logo-dot{width:8px;height:8px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
+
+/* Cinematic background */
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(0,200,83,.08),transparent),radial-gradient(ellipse 40% 40% at 90% 80%,rgba(41,182,246,.04),transparent);pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='1' cy='1' r='0.8' fill='%2300e676' opacity='0.025'/%3E%3C/svg%3E");pointer-events:none;z-index:0}
+
+/* TOP BAR */
+.topbar{position:sticky;top:0;z-index:100;height:56px;background:rgba(3,6,8,.96);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px}
+.logo{font-family:var(--head);font-weight:800;font-size:19px;display:flex;align-items:center;gap:10px;letter-spacing:-.5px}
+.logo-pulse{width:9px;height:9px;background:var(--green);border-radius:50%;box-shadow:0 0 0 0 var(--gglow);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 var(--gglow)}50%{box-shadow:0 0 0 7px transparent}}
 .logo span{color:var(--green)}
-@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,230,118,.4)}50%{box-shadow:0 0 0 6px rgba(0,230,118,0)}}
-.topright{display:flex;align-items:center;gap:16px;font-family:var(--mono);font-size:11px;color:var(--t3)}
-.dot{width:5px;height:5px;border-radius:50%;display:inline-block;margin-right:5px}
-.dlive{background:var(--green);animation:pulse 1.5s infinite}
-.dalert{background:var(--red)}
-nav{display:flex;background:var(--bg3);border-bottom:1px solid var(--border);padding:0 24px;overflow-x:auto}
-.nb{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);background:none;border:none;padding:14px 16px;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap}
-.nb:hover{color:var(--text)}.nb.active{color:var(--green);border-bottom-color:var(--green)}
-.view{display:none;padding:24px;animation:fi .3s ease}.view.active{display:block}
+.topright{display:flex;align-items:center;gap:18px;font-family:var(--mono);font-size:10px}
+.live-tag{display:flex;align-items:center;gap:5px;color:var(--green);background:var(--gdim);border:1px solid rgba(0,230,118,.15);padding:4px 10px;border-radius:4px}
+.live-dot{width:5px;height:5px;background:var(--green);border-radius:50%;animation:pulse 1.5s infinite}
+#clock-el{color:var(--t2)}
+
+/* NAV */
+nav{display:flex;background:var(--bg2);border-bottom:1px solid var(--border);padding:0 28px;overflow-x:auto;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+.nb{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);background:none;border:none;padding:13px 16px;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;position:relative}
+.nb:hover{color:var(--t2)}
+.nb.active{color:var(--green);border-bottom-color:var(--green)}
+.nb .nb-dot{width:5px;height:5px;background:var(--red);border-radius:50%;position:absolute;top:8px;right:8px;display:none}
+.nb.has-alert .nb-dot{display:block}
+
+/* VIEWS */
+.view{display:none;padding:28px;animation:fi .3s ease;position:relative;z-index:1}
+.view.active{display:block}
 @keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.sh{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px}
-.st{font-family:var(--head);font-size:24px;font-weight:800;letter-spacing:-.5px}
-.ss{color:var(--t2);font-size:13px;margin-top:4px}
-.tag{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:4px 10px;border-radius:4px;border:1px solid}
-.tg{color:var(--green);border-color:var(--green);background:var(--gdim)}
-.tr{color:var(--red);border-color:var(--red);background:var(--rdim)}
-.ta{color:var(--amber);border-color:var(--amber);background:var(--adim)}
-.tb{color:var(--blue);border-color:var(--blue);background:var(--bdim)}
-.sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
-@media(max-width:800px){.sgrid{grid-template-columns:repeat(2,1fr)}}
-.sc{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden}
-.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
-.sc.cr::before{background:var(--red)}.sc.ca::before{background:var(--amber)}.sc.cg::before{background:var(--green)}.sc.cb::before{background:var(--blue)}
-.sl{font-family:var(--mono);font-size:10px;color:var(--t3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px}
-.sv{font-family:var(--head);font-size:28px;font-weight:800;letter-spacing:-1px}
-.sv.r{color:var(--red)}.sv.a{color:var(--amber)}.sv.g{color:var(--green)}.sv.b{color:var(--blue)}
-.sd{font-size:12px;color:var(--t3);margin-top:6px}
+
+/* SECTION HEADER */
+.sh{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:14px}
+.st{font-family:var(--head);font-size:26px;font-weight:800;letter-spacing:-.5px;line-height:1.1}
+.ss{color:var(--t2);font-size:13px;margin-top:5px}
+.tag{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:4px 10px;border-radius:4px;border:1px solid}
+.tg{color:var(--green);border-color:rgba(0,230,118,.3);background:var(--gdim)}
+.tr{color:var(--red);border-color:rgba(255,68,68,.3);background:var(--rdim)}
+.ta{color:var(--amber);border-color:rgba(255,179,0,.3);background:var(--adim)}
+.tb{color:var(--blue);border-color:rgba(41,182,246,.3);background:var(--bdim)}
+.tp{color:var(--purple);border-color:rgba(206,147,216,.3);background:var(--pdim)}
+
+/* STAT CARDS */
+.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+@media(max-width:900px){.sg{grid-template-columns:repeat(2,1fr)}}
+.sc{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:22px;position:relative;overflow:hidden;transition:border-color .25s,transform .2s}
+.sc:hover{border-color:var(--border2);transform:translateY(-1px)}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:1.5px}
+.sc.cr::before{background:linear-gradient(90deg,var(--red),transparent)}
+.sc.ca::before{background:linear-gradient(90deg,var(--amber),transparent)}
+.sc.cg::before{background:linear-gradient(90deg,var(--green),transparent)}
+.sc.cb::before{background:linear-gradient(90deg,var(--blue),transparent)}
+.sc.cp::before{background:linear-gradient(90deg,var(--purple),transparent)}
+.sl{font-family:var(--mono);font-size:9px;color:var(--t3);letter-spacing:.12em;text-transform:uppercase;margin-bottom:12px}
+.sv{font-family:var(--head);font-size:32px;font-weight:800;letter-spacing:-1px;line-height:1}
+.sv.r{color:var(--red)}.sv.a{color:var(--amber)}.sv.g{color:var(--green)}.sv.b{color:var(--blue)}.sv.p{color:var(--purple)}
+.sd{font-size:11px;color:var(--t3);margin-top:8px}
+
+/* GRID LAYOUTS */
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-.g64{display:grid;grid-template-columns:1.5fr 1fr;gap:20px}
-@media(max-width:800px){.g2,.g3,.g64{grid-template-columns:1fr}}
-.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px}
-.ct{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:8px}
-.tbl{width:100%;border-collapse:collapse}
-.tbl th{font-family:var(--mono);font-size:10px;color:var(--t3);letter-spacing:.08em;text-transform:uppercase;text-align:left;padding:8px 12px;border-bottom:1px solid var(--border)}
-.tbl td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:13px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.g64{display:grid;grid-template-columns:1.6fr 1fr;gap:20px}
+@media(max-width:900px){.g2,.g3,.g64{grid-template-columns:1fr}}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:22px;transition:border-color .2s}
+.card:hover{border-color:var(--border2)}
+.ct{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--t3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:18px;display:flex;align-items:center;gap:8px}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto}
+.tbl{width:100%;border-collapse:collapse;min-width:600px}
+.tbl th{font-family:var(--mono);font-size:9px;color:var(--t3);letter-spacing:.1em;text-transform:uppercase;text-align:left;padding:9px 14px;border-bottom:1px solid var(--border);white-space:nowrap}
+.tbl td{padding:11px 14px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle}
 .tbl tr:last-child td{border-bottom:none}
-.tbl tr:hover td{background:var(--bg3)}
-.rs{font-family:var(--mono);font-weight:700;font-size:12px;padding:3px 8px;border-radius:4px;display:inline-block}
-.rh{background:var(--rdim);color:var(--red)}.rm{background:var(--adim);color:var(--amber)}.rl{background:var(--gdim);color:var(--green)}
-.fi{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
-.fi:last-child{border-bottom:none}
-.fic{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
-.fir{background:var(--rdim)}.fia{background:var(--adim)}.fig{background:var(--gdim)}.fib{background:var(--bdim)}
-.ft{font-size:13px;font-weight:500;margin-bottom:2px}.fm{font-family:var(--mono);font-size:10px;color:var(--t3)}
-.clist{display:flex;flex-direction:column;gap:10px}
-.ci{display:flex;align-items:center;gap:12px;font-size:13px}
-.cn{width:100px;color:var(--t2);font-size:12px;flex-shrink:0}
-.bw{flex:1;background:var(--bg3);border-radius:4px;height:8px;overflow:hidden}
-.bar{height:100%;border-radius:4px;transition:width 1.2s ease}
-.bh{background:var(--red)}.bm{background:var(--amber)}.bl{background:var(--green)}
-.cv{font-family:var(--mono);font-size:11px;color:var(--t3);width:30px;text-align:right}
+.tbl tbody tr:hover td{background:rgba(255,255,255,.02)}
+
+/* BADGES */
+.badge{font-family:var(--mono);font-size:9px;font-weight:700;padding:3px 8px;border-radius:4px;letter-spacing:.06em;white-space:nowrap}
+.bh{background:var(--rdim);color:var(--red);border:1px solid rgba(255,68,68,.2)}
+.bm{background:var(--adim);color:var(--amber);border:1px solid rgba(255,179,0,.2)}
+.bl{background:var(--gdim);color:var(--green);border:1px solid rgba(0,230,118,.2)}
+.bb{background:var(--bdim);color:var(--blue);border:1px solid rgba(41,182,246,.2)}
+.bp{background:var(--pdim);color:var(--purple);border:1px solid rgba(206,147,216,.2)}
+
+/* BUTTONS */
+.btn{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:10px 20px;border:none;border-radius:8px;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:7px}
+.btn-g{background:var(--green);color:#000}.btn-g:hover{background:var(--gd);transform:translateY(-1px)}
+.btn-o{background:transparent;color:var(--green);border:1px solid rgba(0,230,118,.3)}.btn-o:hover{background:var(--gdim);border-color:var(--green)}
+.btn-r{background:var(--red);color:#fff}.btn-r:hover{opacity:.88}
+.btn-sm{padding:6px 13px;font-size:10px}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important}
+
+/* FORMS */
 .fg{margin-bottom:16px}
-.fl{font-family:var(--mono);font-size:10px;color:var(--t3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;display:block}
-.fi2,.fsel,.fta{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:var(--body);font-size:14px;padding:10px 14px;transition:border-color .2s;outline:none}
-.fi2:focus,.fsel:focus,.fta:focus{border-color:var(--green)}.fta{height:100px;resize:vertical}
+.fl{font-family:var(--mono);font-size:9px;color:var(--t3);letter-spacing:.12em;text-transform:uppercase;margin-bottom:7px;display:block}
+.fi,.fsel,.fta{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:var(--body);font-size:13px;padding:10px 14px;outline:none;transition:border-color .2s}
+.fi:focus,.fsel:focus,.fta:focus{border-color:var(--green);background:var(--card)}
+.fta{height:90px;resize:vertical}
 option{background:var(--bg3)}
-.btn{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:12px 22px;border:none;border-radius:8px;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:8px}
-.bg{background:var(--green);color:#000}.bg:hover{background:var(--green2);transform:translateY(-1px)}
-.bo{background:transparent;color:var(--green);border:1px solid var(--green)}.bo:hover{background:var(--gdim)}
-.br2{background:var(--red);color:#fff}.btn:disabled{opacity:.5;cursor:not-allowed;transform:none!important}
-.bdg{font-family:var(--mono);font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px}
-.bdr{background:var(--rdim);color:var(--red)}.bda{background:var(--adim);color:var(--amber)}.bdg2{background:var(--gdim);color:var(--green)}.bdb{background:var(--bdim);color:var(--blue)}
-.chat-wrap{display:flex;flex-direction:column;height:500px}
-.msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
-.mai{background:var(--bg3);border:1px solid var(--border);border-radius:12px 12px 12px 4px;padding:12px 16px;font-size:14px;line-height:1.6;max-width:82%}
-.mai strong{color:var(--green)}
-.muser{background:var(--gdim);border:1px solid rgba(0,230,118,.2);border-radius:12px 12px 4px 12px;padding:12px 16px;font-size:14px;max-width:82%;align-self:flex-end}
-.mlbl{font-family:var(--mono);font-size:10px;color:var(--t3);margin-bottom:4px;letter-spacing:.08em}
-.cinrow{display:flex;gap:8px;padding:12px;border-top:1px solid var(--border)}
-.cin{flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:var(--body);font-size:14px;padding:10px 14px;outline:none}
-.cin:focus{border-color:var(--green)}
-.typi{display:none;align-items:center;gap:6px;padding:8px 16px}
-.typi.show{display:flex}
-.td{width:6px;height:6px;background:var(--green);border-radius:50%;animation:bou 1.2s infinite}
-.td:nth-child(2){animation-delay:.2s}.td:nth-child(3){animation-delay:.4s}
-@keyframes bou{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
-.mo{position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(4px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
-.mo.show{display:flex}
-.md{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;width:100%;max-width:520px;padding:28px;max-height:90vh;overflow-y:auto;animation:si .3s ease}
-@keyframes si{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
-.mh{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
-.mt2{font-family:var(--head);font-size:20px;font-weight:800}
-.mc{background:none;border:none;color:var(--t3);font-size:20px;cursor:pointer}
-.mc:hover{color:var(--text)}
-.fb{border-radius:8px;padding:12px 14px;font-size:13px;margin-top:12px;display:none}
-.fb.show{display:block}
-.fbg{background:var(--gdim);border:1px solid rgba(0,230,118,.3)}
-.fbr{background:var(--rdim);border:1px solid rgba(255,68,68,.3);color:var(--red)}
-.spi{width:16px;height:16px;border:2px solid rgba(0,0,0,.3);border-top-color:#000;border-radius:50%;animation:sp .7s linear infinite;display:inline-block}
-@keyframes sp{to{transform:rotate(360deg)}}
-.rl{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
-.rl:last-child{border-bottom:none}.rk{color:var(--t2)}
-.gpc{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
-.gpi{height:120px;display:flex;align-items:center;justify-content:center;position:relative}
-.gpb{padding:16px}.gpn{font-size:14px;font-weight:500;margin-bottom:4px}
+
+/* FEED */
+.feed-item{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.feed-item:last-child{border-bottom:none}
+.fic{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.fir{background:var(--rdim)}.fia{background:var(--adim)}.fig{background:var(--gdim)}.fib{background:var(--bdim)}
+.ft{font-size:13px;font-weight:500;margin-bottom:3px}
+.fm{font-family:var(--mono);font-size:10px;color:var(--t3)}
+
+/* PROGRESS BARS */
+.pbar{background:var(--bg3);border-radius:4px;height:6px;overflow:hidden;margin-top:6px}
+.pfill{height:100%;border-radius:4px;transition:width 1.2s ease}
+.ph{background:var(--red)}.pm{background:var(--amber)}.pl{background:var(--green)}
+
+/* COUNTY BARS */
+.clist{display:flex;flex-direction:column;gap:11px}
+.ci{display:flex;align-items:center;gap:12px;font-size:13px}
+.cn{width:90px;color:var(--t2);font-size:12px;flex-shrink:0}
+.bw{flex:1;background:var(--bg3);border-radius:4px;height:7px;overflow:hidden}
+.bar{height:100%;border-radius:4px;transition:width 1.3s ease}
+.cv{font-family:var(--mono);font-size:10px;color:var(--t3);width:28px;text-align:right;flex-shrink:0}
+
+/* GHOST CARDS */
+.gpc{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:border-color .2s,transform .2s}
+.gpc:hover{border-color:var(--border2);transform:translateY(-2px)}
+.gpi{height:110px;display:flex;align-items:center;justify-content:center;position:relative;font-family:var(--mono);font-size:11px}
+.gpb{padding:16px}
+.gpn{font-size:14px;font-weight:600;margin-bottom:4px}
 .gpm{font-family:var(--mono);font-size:10px;color:var(--t3);margin-bottom:10px}
 .gpcmp{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
-.gpcol{background:var(--bg3);border-radius:6px;padding:8px;font-size:12px}
+.gpcol{background:var(--bg3);border-radius:6px;padding:8px;font-size:11px}
 .gpll{color:var(--t3);font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px}
+
+/* MODAL */
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.88);backdrop-filter:blur(6px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+.mo.show{display:flex}
+.md{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;width:100%;max-width:520px;padding:28px;max-height:90vh;overflow-y:auto;animation:si .28s cubic-bezier(.34,1.56,.64,1)}
+@keyframes si{from{transform:translateY(18px) scale(.97);opacity:0}to{transform:none;opacity:1}}
+.mh{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
+.mt2{font-family:var(--head);font-size:20px;font-weight:800}
+.mc{background:none;border:none;color:var(--t3);font-size:20px;cursor:pointer;padding:4px;line-height:1}.mc:hover{color:var(--text)}
+
+/* FEEDBACK */
+.fb{border-radius:8px;padding:12px 14px;font-size:13px;margin-top:12px;display:none;line-height:1.6}
+.fb.show{display:block}
+.fbg{background:rgba(0,230,118,.07);border:1px solid rgba(0,230,118,.2);color:var(--green)}
+.fbr{background:var(--rdim);border:1px solid rgba(255,68,68,.2);color:var(--red)}
+
+/* SPINNER */
+.spi{width:15px;height:15px;border:2px solid rgba(0,0,0,.25);border-top-color:#000;border-radius:50%;animation:sp .7s linear infinite;display:inline-block}
+.spi-l{border:2px solid var(--border2);border-top-color:var(--green)}
+@keyframes sp{to{transform:rotate(360deg)}}
 .div{height:1px;background:var(--border);margin:16px 0}
-::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+/* ── CHATBOT WIDGET ── */
+#kw-trig{position:fixed;bottom:24px;right:24px;width:58px;height:58px;background:var(--green);border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 24px var(--gglow);z-index:9999;transition:transform .2s,box-shadow .2s}
+#kw-trig:hover{transform:scale(1.1);box-shadow:0 6px 32px var(--gglow)}
+#kw-trig svg{width:26px;height:26px;fill:#000}
+#kw-badge{position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;border-radius:50%;width:18px;height:18px;font-size:10px;font-weight:700;display:none;align-items:center;justify-content:center;font-family:var(--mono)}
+#kw-win{position:fixed;bottom:94px;right:24px;width:370px;height:540px;background:var(--bg2);border:1px solid var(--border2);border-radius:16px;display:flex;flex-direction:column;z-index:9998;transform:scale(.9) translateY(18px);opacity:0;pointer-events:none;transition:transform .28s cubic-bezier(.34,1.56,.64,1),opacity .2s;box-shadow:0 24px 64px rgba(0,0,0,.7)}
+#kw-win.open{transform:scale(1) translateY(0);opacity:1;pointer-events:all}
+#kw-hdr{background:linear-gradient(135deg,#0d4a27,#0a3a1e);border-radius:16px 16px 0 0;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(0,200,83,.15);flex-shrink:0}
+.kwhl{display:flex;align-items:center;gap:10px}
+.kwav{width:36px;height:36px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:#000;position:relative;flex-shrink:0}
+.kwon{position:absolute;bottom:1px;right:1px;width:9px;height:9px;background:#00e676;border-radius:50%;border:2px solid #0d4a27}
+.kwtitle{font-weight:700;font-size:13px;color:#fff;font-family:var(--head)}
+.kwsub{font-size:10px;color:#9fe1cb;font-family:var(--mono)}
+.kwacts{display:flex;gap:5px}
+.kwbtn{background:rgba(0,0,0,.3);border:none;color:#9fe1cb;width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.kwbtn:hover{background:rgba(0,0,0,.5);color:#fff}
+#kw-qr{display:flex;gap:5px;padding:9px 12px;overflow-x:auto;flex-shrink:0;border-bottom:1px solid var(--border);scrollbar-width:none}
+#kw-qr::-webkit-scrollbar{display:none}
+.kwq{white-space:nowrap;background:rgba(0,200,83,.08);border:1px solid rgba(0,200,83,.18);color:#9fe1cb;font-size:10px;padding:4px 9px;border-radius:14px;cursor:pointer;transition:all .15s;flex-shrink:0;font-family:var(--mono)}
+.kwq:hover{background:rgba(0,200,83,.16);color:#fff}
+#kw-msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:9px;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+#kw-msgs::-webkit-scrollbar{width:3px}
+#kw-msgs::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.kwm{display:flex;gap:7px;animation:kwf .22s ease}
+@keyframes kwf{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.kwm.u{flex-direction:row-reverse}
+.kwb{max-width:80%;padding:9px 12px;border-radius:13px;font-size:12.5px;line-height:1.55}
+.kwm.a .kwb{background:var(--card2);border:1px solid var(--border);border-bottom-left-radius:3px;color:var(--text)}
+.kwm.a .kwb strong{color:var(--green)}
+.kwm.u .kwb{background:var(--green);color:#000;font-weight:500;border-bottom-right-radius:3px}
+.kwsm{width:26px;height:26px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;margin-top:2px}
+.kwm.a .kwsm{background:rgba(0,200,83,.12);color:var(--green)}
+.kwm.u .kwsm{background:rgba(0,0,0,.2);color:#000}
+.kwt{font-size:10px;color:var(--t3);margin-top:2px;text-align:right}
+.kwm.a .kwt{text-align:left}
+#kw-typing{display:none;align-items:center;gap:8px;padding:2px 0}
+#kw-typing.show{display:flex}
+.kwd{width:6px;height:6px;background:var(--green);border-radius:50%;animation:kwd 1.2s infinite}
+.kwd:nth-child(2){animation-delay:.2s}.kwd:nth-child(3){animation-delay:.4s}
+@keyframes kwd{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+#kw-foot{padding:9px 12px;border-top:1px solid var(--border);display:flex;gap:7px;flex-shrink:0}
+#kw-inp{flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:9px;color:var(--text);font-family:var(--body);font-size:12.5px;padding:8px 12px;outline:none;transition:border-color .2s;resize:none;height:36px}
+#kw-inp:focus{border-color:var(--green)}
+#kw-inp::placeholder{color:var(--t3)}
+#kw-send{width:36px;height:36px;background:var(--green);border:none;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .18s;flex-shrink:0}
+#kw-send:hover{background:#00e676;transform:scale(1.07)}
+#kw-send:disabled{background:var(--border);cursor:not-allowed;transform:none}
+#kw-send svg{width:15px;height:15px;fill:#000}
+#kw-pwr{text-align:center;padding:5px;font-size:9px;color:var(--t3);border-top:1px solid var(--border);flex-shrink:0;font-family:var(--mono)}
+@media(max-width:420px){#kw-win{width:calc(100vw - 12px);right:6px;bottom:80px;height:72vh}}
+
+/* AI INVESTIGATOR CHAT */
+.chat-wrap{display:flex;flex-direction:column;height:480px}
+.chat-msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:11px;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.chat-msgs::-webkit-scrollbar{width:4px}
+.chat-msgs::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.cmsg{display:flex;gap:9px}
+.cmsg.u{flex-direction:row-reverse}
+.cbub{max-width:82%;padding:11px 15px;border-radius:14px;font-size:13px;line-height:1.6}
+.cmsg.a .cbub{background:var(--card2);border:1px solid var(--border);border-bottom-left-radius:3px}
+.cmsg.a .cbub strong{color:var(--green)}
+.cmsg.u .cbub{background:var(--green);color:#000;font-weight:500;border-bottom-right-radius:3px}
+.cav{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;margin-top:2px}
+.cmsg.a .cav{background:var(--gdim);color:var(--green)}
+.cmsg.u .cav{background:rgba(0,0,0,.2);color:#000}
+#ai-typing{display:none;align-items:center;gap:7px;padding:8px 16px}
+#ai-typing.show{display:flex}
+.ai-dot{width:7px;height:7px;background:var(--green);border-radius:50%;animation:kwd 1.2s infinite}
+.ai-dot:nth-child(2){animation-delay:.2s}.ai-dot:nth-child(3){animation-delay:.4s}
+.chat-input-row{display:flex;gap:8px;padding:12px;border-top:1px solid var(--border)}
+.chat-inp{flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:9px;color:var(--text);font-family:var(--body);font-size:13px;padding:10px 14px;outline:none;transition:border-color .2s}
+.chat-inp:focus{border-color:var(--green)}
+.chat-inp::placeholder{color:var(--t3)}
+
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
 </style>
 </head>
 <body>
 
+<!-- TOP BAR -->
 <div class="topbar">
-  <div class="logo"><div class="logo-dot"></div>Kenya<span>Watch</span> AI</div>
+  <div class="logo"><div class="logo-pulse"></div>Kenya<span>Watch</span> AI</div>
   <div class="topright">
-    <span><span class="dot dlive"></span>LIVE</span>
-    <span><span class="dot dalert"></span><span id="flag-c">--</span> FLAGS</span>
-    <span id="clk" style="color:var(--t2)">--:--:-- EAT</span>
+    <div class="live-tag"><div class="live-dot"></div>LIVE</div>
+    <span id="flag-c" style="color:var(--red)">-- FLAGS</span>
+    <span id="clock-el">--:--:-- EAT</span>
   </div>
 </div>
 
+<!-- NAV -->
 <nav>
   <button class="nb active" onclick="show('dashboard')">⬛ Overview</button>
-  <button class="nb" onclick="show('procurement')">📋 Procurement</button>
+  <button class="nb has-alert" onclick="show('procurement')">📋 Procurement<span class="nb-dot"></span></button>
   <button class="nb" onclick="show('ghost')">👻 Ghost Projects</button>
   <button class="nb" onclick="show('report')">🚨 Report</button>
   <button class="nb" onclick="show('ai')">🤖 AI Investigator</button>
   <button class="nb" onclick="show('about')">ℹ About</button>
 </nav>
 
-<!-- DASHBOARD -->
+<!-- ═══ DASHBOARD ═══ -->
 <div id="v-dashboard" class="view active">
   <div class="sh">
-    <div><div class="st">Intelligence Overview</div><div class="ss">Real-time corruption monitoring — Kenya</div></div>
+    <div><div class="st">Intelligence Overview</div><div class="ss">Real-time corruption monitoring across all 47 Kenya counties</div></div>
     <div class="tag tg" id="du">Loading...</div>
   </div>
-  <div class="sgrid">
+  <div class="sg">
     <div class="sc cr"><div class="sl">Contracts Flagged</div><div class="sv r" id="s1">--</div><div class="sd">High-risk active</div></div>
     <div class="sc ca"><div class="sl">Ghost Projects</div><div class="sv a" id="s2">--</div><div class="sd">Satellite detected</div></div>
     <div class="sc cg"><div class="sl">Reports (30 days)</div><div class="sv g" id="s3">--</div><div class="sd">From citizens</div></div>
@@ -151,76 +286,83 @@ option{background:var(--bg3)}
   </div>
   <div class="g64" style="margin-bottom:20px">
     <div class="card">
-      <div class="ct">🗺 Risk by County</div>
-      <div class="clist">
-        <div class="ci"><div class="cn">Nairobi</div><div class="bw"><div class="bar bh" style="width:0" data-w="92%"></div></div><div class="cv">92</div></div>
-        <div class="ci"><div class="cn">Kiambu</div><div class="bw"><div class="bar bh" style="width:0" data-w="87%"></div></div><div class="cv">87</div></div>
-        <div class="ci"><div class="cn">Mombasa</div><div class="bw"><div class="bar bh" style="width:0" data-w="81%"></div></div><div class="cv">81</div></div>
-        <div class="ci"><div class="cn">Nakuru</div><div class="bw"><div class="bar bm" style="width:0" data-w="68%"></div></div><div class="cv">68</div></div>
-        <div class="ci"><div class="cn">Kakamega</div><div class="bw"><div class="bar bm" style="width:0" data-w="61%"></div></div><div class="cv">61</div></div>
-        <div class="ci"><div class="cn">Kisumu</div><div class="bw"><div class="bar bm" style="width:0" data-w="55%"></div></div><div class="cv">55</div></div>
-        <div class="ci"><div class="cn">Kisii</div><div class="bw"><div class="bar bl" style="width:0" data-w="38%"></div></div><div class="cv">38</div></div>
-        <div class="ci"><div class="cn">Turkana</div><div class="bw"><div class="bar bl" style="width:0" data-w="29%"></div></div><div class="cv">29</div></div>
-      </div>
+      <div class="ct">🗺 Corruption Risk by County</div>
+      <div class="clist" id="county-bars"><div style="color:var(--t3);font-size:13px">Loading...</div></div>
     </div>
     <div class="card">
-      <div class="ct">📡 Live Feed</div>
-      <div class="fi"><div class="fic fir">🚨</div><div><div class="ft">High-risk tender: Road KES 450M flagged</div><div class="fm">NAIROBI · 2 min ago · AI SCORE: 94</div></div></div>
-      <div class="fi"><div class="fic fia">⚠️</div><div><div class="ft">Ghost school project — Kiambu satellite</div><div class="fm">KIAMBU · 18 min ago · SATELLITE</div></div></div>
-      <div class="fi"><div class="fic fib">👤</div><div><div class="ft">Anonymous report: Bribery at office</div><div class="fm">MOMBASA · 34 min ago · CITIZEN</div></div></div>
-      <div class="fi"><div class="fic fia">⚠️</div><div><div class="ft">Supplier: 4 contracts, no competitive bid</div><div class="fm">NAKURU · 1hr ago · AI PATTERN</div></div></div>
-      <div class="fi"><div class="fic fig">✅</div><div><div class="ft">Investigation closed — funds recovered</div><div class="fm">NYERI · 3hr ago · RESOLVED</div></div></div>
+      <div class="ct">📡 Live Activity Feed</div>
+      <div id="live-feed"><div style="color:var(--t3);font-size:13px">Loading...</div></div>
     </div>
+  </div>
+  <div class="g3">
+    <div class="card"><div class="ct">📊 Risk Distribution</div><div id="risk-dist">Loading...</div></div>
+    <div class="card"><div class="ct">🏗 Top Sectors at Risk</div><div id="sector-dist">Loading...</div></div>
+    <div class="card"><div class="ct">⚡ Platform Health</div><div id="health-panel">Loading...</div></div>
   </div>
 </div>
 
-<!-- PROCUREMENT -->
+<!-- ═══ PROCUREMENT ═══ -->
 <div id="v-procurement" class="view">
   <div class="sh">
-    <div><div class="st">Procurement Scanner</div><div class="ss">AI risk-scoring of government tenders</div></div>
-    <button class="btn bg" onclick="openM('scan-modal')">+ Scan Contract</button>
+    <div><div class="st">Procurement Scanner</div><div class="ss">AI risk-scoring of government tenders — real Kenya data</div></div>
+    <button class="btn btn-g btn-sm" onclick="openM('scan-modal')">+ Scan Contract</button>
   </div>
-  <div class="card" style="margin-bottom:20px;overflow-x:auto">
-    <div class="ct">⚠️ Flagged Contracts</div>
-    <table class="tbl">
-      <thead><tr><th>Contract ID</th><th>Description</th><th>County</th><th>Value (KES)</th><th>Supplier</th><th>AI Score</th><th>Flags</th></tr></thead>
-      <tbody id="ctbl"><tr><td colspan="7" style="text-align:center;padding:20px;color:var(--t3);font-size:12px">Loading...</td></tr></tbody>
-    </table>
-  </div>
-  <div class="card">
-    <div class="ct">📊 Risk Distribution</div>
-    <div id="rdist" style="color:var(--t3);font-size:13px">Loading...</div>
+  <div class="card" style="margin-bottom:20px">
+    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+      <input class="fi" style="width:200px" id="search-q" placeholder="Search contracts..." oninput="loadContracts()">
+      <select class="fsel" style="width:140px" id="filter-risk" onchange="loadContracts()">
+        <option value="">All Risk Levels</option><option>HIGH</option><option>MEDIUM</option><option>LOW</option>
+      </select>
+      <select class="fsel" style="width:140px" id="filter-county" onchange="loadContracts()">
+        <option value="">All Counties</option>
+        <option>Nairobi</option><option>Mombasa</option><option>Kisumu</option><option>Nakuru</option>
+        <option>Kiambu</option><option>Kisii</option><option>Kakamega</option><option>Meru</option><option>National</option>
+      </select>
+      <select class="fsel" style="width:140px" id="filter-sector" onchange="loadContracts()">
+        <option value="">All Sectors</option>
+        <option>Roads</option><option>Health</option><option>Education</option><option>Water</option>
+        <option>Agriculture</option><option>ICT</option><option>Security</option>
+      </select>
+    </div>
+    <div class="ct">⚠️ Government Contracts</div>
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr><th>Contract ID</th><th>Description</th><th>County</th><th>Sector</th><th>Value (KES)</th><th>Supplier</th><th>AI Score</th><th>Action</th></tr></thead>
+        <tbody id="ctbl"><tr><td colspan="8" style="text-align:center;padding:20px;color:var(--t3)">Loading contracts...</td></tr></tbody>
+      </table>
+    </div>
+    <div id="ctracts-footer" style="margin-top:12px;font-size:12px;color:var(--t3)"></div>
   </div>
 </div>
 
-<!-- GHOST PROJECTS -->
+<!-- ═══ GHOST PROJECTS ═══ -->
 <div id="v-ghost" class="view">
   <div class="sh">
-    <div><div class="st">Ghost Project Detector</div><div class="ss">Satellite imagery vs. funded project reality</div></div>
-    <div class="tag ta" id="gtag">Loading...</div>
+    <div><div class="st">Ghost Project Detector</div><div class="ss">Satellite imagery vs. government-reported completions</div></div>
+    <div class="tag ta" id="ghost-tag">Loading...</div>
   </div>
-  <div class="g3" id="ggrid" style="margin-bottom:20px"><div style="color:var(--t3);font-size:13px">Loading...</div></div>
+  <div class="g3" id="ghost-grid" style="margin-bottom:20px"><div style="color:var(--t3);font-size:13px">Loading...</div></div>
   <div class="card">
-    <div class="ct">🛰 Detection Process</div>
+    <div class="ct">🛰 Detection Pipeline</div>
     <div class="g3">
-      <div style="text-align:center;padding:16px 8px"><div style="font-size:28px;margin-bottom:10px">🛰️</div><div style="font-family:var(--mono);font-size:11px;color:var(--green);margin-bottom:6px">STEP 1 · INGEST</div><div style="font-size:13px;color:var(--t2)">Sentinel-2 satellite images fetched for each funded project GPS coordinate every 30 days</div></div>
-      <div style="text-align:center;padding:16px 8px;border-left:1px solid var(--border);border-right:1px solid var(--border)"><div style="font-size:28px;margin-bottom:10px">🧠</div><div style="font-family:var(--mono);font-size:11px;color:var(--amber);margin-bottom:6px">STEP 2 · ANALYSE</div><div style="font-size:13px;color:var(--t2)">AI vision model compares image vs. contract description — classifies Built / Partial / Ghost</div></div>
-      <div style="text-align:center;padding:16px 8px"><div style="font-size:28px;margin-bottom:10px">🚨</div><div style="font-family:var(--mono);font-size:11px;color:var(--red);margin-bottom:6px">STEP 3 · ALERT</div><div style="font-size:13px;color:var(--t2)">Discrepancies auto-escalated to EACC, journalists, and county oversight committee</div></div>
+      <div style="text-align:center;padding:16px 8px"><div style="font-size:30px;margin-bottom:10px">🛰️</div><div style="font-family:var(--mono);font-size:10px;color:var(--green);margin-bottom:6px;letter-spacing:.08em">STEP 1 · INGEST</div><div style="font-size:12px;color:var(--t2)">Sentinel-2 satellite images fetched for every funded project GPS coordinate every 30 days</div></div>
+      <div style="text-align:center;padding:16px 8px;border-left:1px solid var(--border);border-right:1px solid var(--border)"><div style="font-size:30px;margin-bottom:10px">🧠</div><div style="font-family:var(--mono);font-size:10px;color:var(--amber);margin-bottom:6px;letter-spacing:.08em">STEP 2 · ANALYSE</div><div style="font-size:12px;color:var(--t2)">AI vision model classifies ground conditions vs. contract claims: Built / Partial / Ghost</div></div>
+      <div style="text-align:center;padding:16px 8px"><div style="font-size:30px;margin-bottom:10px">🚨</div><div style="font-family:var(--mono);font-size:10px;color:var(--red);margin-bottom:6px;letter-spacing:.08em">STEP 3 · ALERT</div><div style="font-size:12px;color:var(--t2)">Discrepancies auto-escalated to EACC, county assembly oversight, investigative journalists</div></div>
     </div>
   </div>
 </div>
 
-<!-- REPORT -->
+<!-- ═══ REPORT ═══ -->
 <div id="v-report" class="view">
   <div class="sh">
-    <div><div class="st">Report Corruption</div><div class="ss">Anonymous, encrypted, AI-verified reports</div></div>
+    <div><div class="st">Report Corruption</div><div class="ss">Anonymous, encrypted, AI-verified citizen reporting</div></div>
     <div class="tag tg">END-TO-END ENCRYPTED</div>
   </div>
   <div class="g64">
     <div class="card">
       <div class="ct">🔐 Submit a Report</div>
       <div class="fg"><label class="fl">Type of Corruption</label>
-        <select class="fsel" id="rtype">
+        <select class="fsel" id="rt">
           <option value="">— Select type —</option>
           <option>Bribery / Kickbacks</option><option>Ghost project / Fake delivery</option>
           <option>Procurement fraud</option><option>Embezzlement of public funds</option>
@@ -230,39 +372,39 @@ option{background:var(--bg3)}
       </div>
       <div class="g2" style="gap:12px">
         <div class="fg"><label class="fl">County</label>
-          <select class="fsel" id="rcounty">
+          <select class="fsel" id="rco">
             <option value="">— Select —</option>
-            <option>Nairobi</option><option>Mombasa</option><option>Kisumu</option>
-            <option>Nakuru</option><option>Kiambu</option><option>Kisii</option><option>Kakamega</option><option>Other</option>
+            <option>Nairobi</option><option>Mombasa</option><option>Kisumu</option><option>Nakuru</option>
+            <option>Kiambu</option><option>Kisii</option><option>Kakamega</option><option>Meru</option><option>Other</option>
           </select>
         </div>
         <div class="fg"><label class="fl">Sector</label>
-          <select class="fsel" id="rsector">
+          <select class="fsel" id="rse">
             <option value="">— Select —</option>
-            <option>Health</option><option>Education</option><option>Roads & Infrastructure</option>
-            <option>Water & Sanitation</option><option>Police & Security</option><option>Lands</option><option>Other</option>
+            <option>Health</option><option>Education</option><option>Roads</option>
+            <option>Water</option><option>Agriculture</option><option>ICT</option><option>Security</option>
           </select>
         </div>
       </div>
       <div class="fg"><label class="fl">Describe what happened</label>
-        <textarea class="fta" id="rdesc" placeholder="Describe the incident in detail. Include dates, amounts, names of officials if known. Your identity is fully protected."></textarea>
+        <textarea class="fta" id="rd" placeholder="Describe in detail. Include dates, amounts, names of officials if known. Identity fully protected."></textarea>
       </div>
       <div class="fg"><label class="fl">Estimated Amount (KES) — optional</label>
-        <input type="number" class="fi2" id="ramount" placeholder="e.g. 500000">
+        <input type="number" class="fi" id="ra" placeholder="e.g. 500000">
       </div>
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
         <input type="checkbox" id="ranon" checked style="accent-color:var(--green)">
-        <label for="ranon" style="font-size:13px;color:var(--t2);cursor:pointer">Submit anonymously (identity never stored)</label>
+        <label for="ranon" style="font-size:13px;color:var(--t2);cursor:pointer">Submit anonymously — identity never stored</label>
       </div>
-      <button class="btn bg" onclick="submitReport()" id="subbtn">Submit Report Securely</button>
+      <button class="btn btn-g" onclick="submitReport()" id="subbtn">Submit Report Securely</button>
       <div class="fb" id="subfb"></div>
     </div>
     <div>
       <div class="card" style="margin-bottom:16px">
         <div class="ct">🤖 What AI Does</div>
-        <div style="font-size:13px;color:var(--t2);line-height:1.9;display:flex;flex-direction:column;gap:6px">
+        <div style="font-size:13px;color:var(--t2);line-height:1.9">
           <div>✅ Strips all personally identifying info</div>
-          <div>✅ Scores report for credibility (0–100)</div>
+          <div>✅ Scores report credibility (0–100)</div>
           <div>✅ Cross-references existing case database</div>
           <div>✅ Routes to EACC, DPP, or PPRA</div>
           <div>✅ Issues unique tracking case number</div>
@@ -270,80 +412,82 @@ option{background:var(--bg3)}
       </div>
       <div class="card">
         <div class="ct">📊 Recent Reports</div>
-        <div id="rfeed"><div style="font-size:13px;color:var(--t3);font-family:var(--mono)">Loading...</div></div>
+        <div id="rfeed"><div style="font-size:13px;color:var(--t3)">Loading...</div></div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- AI INVESTIGATOR -->
+<!-- ═══ AI INVESTIGATOR ═══ -->
 <div id="v-ai" class="view">
   <div class="sh">
-    <div><div class="st">AI Corruption Investigator</div><div class="ss">Ask anything about procurement or corruption in Kenya</div></div>
-    <div class="tag tb">CLAUDE AI</div>
+    <div><div class="st">AI Corruption Investigator</div><div class="ss">Claude AI with live database context — ask anything about Kenya procurement</div></div>
+    <div class="tag tb">CLAUDE AI · LIVE DATA</div>
   </div>
   <div class="g64">
     <div class="card" style="padding:0;overflow:hidden">
       <div class="chat-wrap">
-        <div class="msgs" id="msgs">
-          <div><div class="mlbl">KENYAWATCH AI</div>
-          <div class="mai"><strong>Habari!</strong> I'm KenyaWatch AI — your anti-corruption intelligence assistant.<br><br>I can help you analyse contracts, investigate supplier networks, understand county corruption patterns, and tell you exactly what action to take.<br><br>What would you like to investigate?</div></div>
+        <div class="chat-msgs" id="ai-msgs">
+          <div class="cmsg a"><div class="cav">AI</div><div><div class="cbub"><strong>Habari!</strong> I'm KenyaWatch AI with live access to Kenya's procurement database.<br><br>I can analyse specific contracts, investigate supplier networks, identify corruption patterns, and tell you exactly what action to take.<br><br>What would you like to investigate?</div></div></div>
         </div>
-        <div class="typi" id="typi"><div class="td"></div><div class="td"></div><div class="td"></div><span style="font-size:11px;color:var(--t3);font-family:var(--mono)">Thinking...</span></div>
-        <div class="cinrow">
-          <input class="cin" id="cin" placeholder="Ask about any contract, county, or corruption case..." onkeydown="if(event.key==='Enter'){event.preventDefault();sendChat()}">
-          <button class="btn bg" onclick="sendChat()">Send</button>
+        <div id="ai-typing" class="cmsg a" style="padding:8px 16px;display:none">
+          <div class="cav">AI</div>
+          <div class="cbub" style="padding:12px 14px"><div style="display:flex;gap:5px;align-items:center"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div></div>
+        </div>
+        <div class="chat-input-row">
+          <input class="chat-inp" id="ai-inp" placeholder="Ask about any contract, county, supplier or pattern..." onkeydown="if(event.key==='Enter'){event.preventDefault();sendAI()}">
+          <button class="btn btn-g btn-sm" onclick="sendAI()">Send</button>
         </div>
       </div>
     </div>
     <div style="display:flex;flex-direction:column;gap:16px">
       <div class="card">
         <div class="ct">⚡ Quick Queries</div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          <button class="btn bo" style="text-align:left;padding:10px 14px;font-size:11px" onclick="qQ('What are the highest risk procurement contracts in Kenya right now?')">Top risk contracts in Kenya →</button>
-          <button class="btn bo" style="text-align:left;padding:10px 14px;font-size:11px" onclick="qQ('How does satellite AI detect ghost projects in Kenya?')">How ghost project detection works →</button>
-          <button class="btn bo" style="text-align:left;padding:10px 14px;font-size:11px" onclick="qQ('Which government sectors in Kenya have the most corruption?')">Most corrupt sectors →</button>
-          <button class="btn bo" style="text-align:left;padding:10px 14px;font-size:11px" onclick="qQ('What should I do if I witness a government official accepting a bribe?')">What to do if you witness bribery →</button>
-          <button class="btn bo" style="text-align:left;padding:10px 14px;font-size:11px" onclick="qQ('How can AI detect collusion between suppliers in Kenya tenders?')">How AI detects supplier collusion →</button>
+        <div style="display:flex;flex-direction:column;gap:7px">
+          <button class="btn btn-o btn-sm" style="text-align:left;justify-content:flex-start" onclick="qAI('What are the top 5 highest-risk contracts in the database?')">Top 5 highest-risk contracts →</button>
+          <button class="btn btn-o btn-sm" style="text-align:left;justify-content:flex-start" onclick="qAI('Which counties have the most corruption cases?')">Counties with most cases →</button>
+          <button class="btn btn-o btn-sm" style="text-align:left;justify-content:flex-start" onclick="qAI('Summarise all pending citizen reports and their routing')">Pending reports summary →</button>
+          <button class="btn btn-o btn-sm" style="text-align:left;justify-content:flex-start" onclick="qAI('How does satellite AI detect ghost projects in Kenya?')">Ghost project detection →</button>
+          <button class="btn btn-o btn-sm" style="text-align:left;justify-content:flex-start" onclick="qAI('What should I do if I witness a government official accepting a bribe?')">What to do re bribery →</button>
         </div>
       </div>
       <div class="card">
         <div class="ct">🏛 Oversight Bodies</div>
-        <div style="display:flex;flex-direction:column;gap:10px;font-size:13px">
-          <div style="padding:10px;background:var(--bg3);border-radius:8px"><div style="font-weight:500;margin-bottom:2px">EACC</div><div style="color:var(--t3);font-size:11px">Ethics & Anti-Corruption Commission · 0800 720 880</div></div>
-          <div style="padding:10px;background:var(--bg3);border-radius:8px"><div style="font-weight:500;margin-bottom:2px">DPP</div><div style="color:var(--t3);font-size:11px">Director of Public Prosecutions · corruption@dpp.go.ke</div></div>
-          <div style="padding:10px;background:var(--bg3);border-radius:8px"><div style="font-weight:500;margin-bottom:2px">PPRA</div><div style="color:var(--t3);font-size:11px">Public Procurement Regulatory Authority · ppra.go.ke</div></div>
+        <div style="display:flex;flex-direction:column;gap:9px;font-size:13px">
+          <div style="padding:10px;background:var(--bg3);border-radius:8px"><div style="font-weight:600;margin-bottom:2px">EACC</div><div style="color:var(--t2);font-size:11px">Ethics & Anti-Corruption Commission · 0800 720 880</div></div>
+          <div style="padding:10px;background:var(--bg3);border-radius:8px"><div style="font-weight:600;margin-bottom:2px">DPP</div><div style="color:var(--t2);font-size:11px">Director of Public Prosecutions · corruption@dpp.go.ke</div></div>
+          <div style="padding:10px;background:var(--bg3);border-radius:8px"><div style="font-weight:600;margin-bottom:2px">PPRA</div><div style="color:var(--t2);font-size:11px">Public Procurement Regulatory Authority · ppra.go.ke</div></div>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ABOUT -->
+<!-- ═══ ABOUT ═══ -->
 <div id="v-about" class="view">
-  <div class="sh"><div><div class="st">About KenyaWatch AI</div><div class="ss">Open-source AI anti-corruption platform for Kenya</div></div><div class="tag tg">HACKATHON 2026</div></div>
+  <div class="sh"><div><div class="st">About KenyaWatch AI</div><div class="ss">Open-source AI anti-corruption platform — Daggy Techs, Kenya</div></div><div class="tag tg">v3.0.0</div></div>
   <div class="g2" style="margin-bottom:20px">
-    <div class="card"><div class="ct">🎯 The Problem</div><div style="font-size:14px;color:var(--t2);line-height:1.8">Corruption costs Kenya an estimated <strong style="color:var(--red)">KES 500 billion annually</strong> — about 30% of the national budget. Procurement alone accounts for 60% of government spending. Manual audit systems cannot keep pace.</div></div>
-    <div class="card"><div class="ct">💡 Our Solution</div><div style="font-size:14px;color:var(--t2);line-height:1.8">KenyaWatch AI combines <strong style="color:var(--green)">ML fraud detection</strong>, <strong style="color:var(--blue)">satellite verification</strong>, and <strong style="color:var(--amber)">citizen reporting</strong> into one real-time intelligence platform.</div></div>
+    <div class="card"><div class="ct">🎯 The Problem</div><div style="font-size:14px;color:var(--t2);line-height:1.8">Corruption costs Kenya an estimated <strong style="color:var(--red)">KES 500 billion annually</strong> — 30% of the national budget. Public procurement accounts for 60% of government spending. Manual audits cannot keep pace with the scale and sophistication of modern procurement fraud.</div></div>
+    <div class="card"><div class="ct">💡 Our Solution</div><div style="font-size:14px;color:var(--t2);line-height:1.8">KenyaWatch AI combines <strong style="color:var(--green)">ML fraud detection</strong>, <strong style="color:var(--blue)">satellite verification</strong>, and <strong style="color:var(--amber)">anonymous citizen reporting</strong> into one real-time intelligence platform — empowering EACC, journalists, and citizens simultaneously.</div></div>
   </div>
   <div class="card" style="margin-bottom:20px">
-    <div class="ct">🏗 Tech Stack</div>
+    <div class="ct">🏗 Architecture</div>
     <div class="g3">
-      <div style="padding:16px;background:var(--bg3);border-radius:10px"><div style="font-family:var(--mono);font-size:11px;color:var(--green);margin-bottom:8px">BACKEND</div><div style="font-size:13px;color:var(--t2);line-height:1.7">Node.js + Express on Railway. PostgreSQL. Anthropic Claude API. Helmet + rate limiting security.</div></div>
-      <div style="padding:16px;background:var(--bg3);border-radius:10px"><div style="font-family:var(--mono);font-size:11px;color:var(--blue);margin-bottom:8px">FRONTEND</div><div style="font-size:13px;color:var(--t2);line-height:1.7">Vanilla HTML/CSS/JS. Calls backend API. Deployed separately on Railway.</div></div>
-      <div style="padding:16px;background:var(--bg3);border-radius:10px"><div style="font-family:var(--mono);font-size:11px;color:var(--amber);margin-bottom:8px">DATA</div><div style="font-size:13px;color:var(--t2);line-height:1.7">Kenya e-GP, PPIP portal, KRA iTax, Sentinel-2 satellite API, EACC database, citizen reports.</div></div>
+      <div style="padding:16px;background:var(--bg3);border-radius:10px"><div style="font-family:var(--mono);font-size:10px;color:var(--green);margin-bottom:8px">BACKEND</div><div style="font-size:13px;color:var(--t2);line-height:1.7">Node.js + Express on Railway. PostgreSQL with 40+ real contracts, 10 ghost projects, citizen reports. Helmet + rate limiting.</div></div>
+      <div style="padding:16px;background:var(--bg3);border-radius:10px"><div style="font-family:var(--mono);font-size:10px;color:var(--blue);margin-bottom:8px">AI LAYER</div><div style="font-size:13px;color:var(--t2);line-height:1.7">Anthropic Claude Sonnet for chat. Custom ML risk scorer, credibility scorer, satellite analyzer. All models trained on Kenya procurement patterns.</div></div>
+      <div style="padding:16px;background:var(--bg3);border-radius:10px"><div style="font-family:var(--mono);font-size:10px;color:var(--amber);margin-bottom:8px">DATA</div><div style="font-size:13px;color:var(--t2);line-height:1.7">40 Kenya govt contracts, 10 ghost projects (satellite-verified), 10 citizen reports. Real supplier patterns, county data, market benchmarks.</div></div>
     </div>
   </div>
   <div class="card">
     <div class="ct">🧑‍💻 Built By</div>
     <div style="display:flex;align-items:center;gap:20px;padding:8px 0">
-      <div style="width:56px;height:56px;background:var(--gdim);border:1px solid var(--green);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px">🧑‍💻</div>
+      <div style="width:56px;height:56px;background:var(--gdim);border:1px solid rgba(0,230,118,.2);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px">🧑‍💻</div>
       <div>
         <div style="font-family:var(--head);font-size:20px;font-weight:800">Douglas Mwebi (Daggy)</div>
-        <div style="color:var(--t2);font-size:13px;margin-top:2px">Daggy Techs · Kisii, Kenya</div>
+        <div style="color:var(--t2);font-size:13px;margin-top:3px">Daggy Techs · Kisii, Kenya</div>
         <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
-          <span class="bdg bdg2">daggytechs@gmail.com</span>
-          <span class="bdg bdb">+254 796 820 013</span>
+          <span class="badge bl">daggytechs@gmail.com</span>
+          <span class="badge bb">+254 796 820 013</span>
         </div>
       </div>
     </div>
@@ -354,794 +498,392 @@ option{background:var(--bg3)}
 <div class="mo" id="scan-modal">
   <div class="md">
     <div class="mh"><div class="mt2">Scan Contract for Fraud</div><button class="mc" onclick="closeM('scan-modal')">✕</button></div>
-    <div class="fg"><label class="fl">Contract ID</label><input class="fi2" id="mid" placeholder="e.g. KE-PRO-2026-0500"></div>
-    <div class="fg"><label class="fl">Supplier Name</label><input class="fi2" id="msup" placeholder="Company name as registered"></div>
-    <div class="fg"><label class="fl">Description</label><input class="fi2" id="mdesc" placeholder="Brief contract description"></div>
-    <div class="fg"><label class="fl">Value (KES)</label><input type="number" class="fi2" id="mval" placeholder="e.g. 45000000"></div>
-    <div class="fg"><label class="fl">County</label>
-      <select class="fsel" id="mcounty"><option>Nairobi</option><option>Mombasa</option><option>Kisumu</option><option>Nakuru</option><option>Kiambu</option><option>Kisii</option><option>Other</option></select>
+    <div class="fg"><label class="fl">Contract ID *</label><input class="fi" id="m-id" placeholder="e.g. KE-PRO-2026-0500"></div>
+    <div class="fg"><label class="fl">Supplier Name *</label><input class="fi" id="m-sup" placeholder="Company name"></div>
+    <div class="fg"><label class="fl">Description</label><input class="fi" id="m-desc" placeholder="Brief description"></div>
+    <div class="g2" style="gap:12px">
+      <div class="fg"><label class="fl">County</label><select class="fsel" id="m-co"><option>Nairobi</option><option>Mombasa</option><option>Kisumu</option><option>Nakuru</option><option>Kiambu</option><option>Kisii</option><option>Other</option></select></div>
+      <div class="fg"><label class="fl">Sector</label><select class="fsel" id="m-sec"><option>Roads</option><option>Health</option><option>Education</option><option>Water</option><option>Agriculture</option><option>ICT</option></select></div>
     </div>
-    <button class="btn bg" onclick="runScan()" id="scanbtn" style="width:100%;justify-content:center">Run AI Scan</button>
-    <div class="fb" id="scanfb"></div>
+    <div class="g2" style="gap:12px">
+      <div class="fg"><label class="fl">Value (KES) *</label><input type="number" class="fi" id="m-val" placeholder="e.g. 45000000"></div>
+      <div class="fg"><label class="fl">Bid Type</label><select class="fsel" id="m-bid"><option value="open">Open</option><option value="single_source">Single Source</option><option value="restricted">Restricted</option><option value="emergency">Emergency</option></select></div>
+    </div>
+    <div class="g2" style="gap:12px">
+      <div class="fg"><label class="fl">Supplier Reg Date</label><input type="date" class="fi" id="m-reg"></div>
+      <div class="fg"><label class="fl">Award Date</label><input type="date" class="fi" id="m-awd"></div>
+    </div>
+    <button class="btn btn-g" onclick="runScan()" id="scan-btn" style="width:100%;justify-content:center">Run AI Scan</button>
+    <div class="fb" id="scan-fb"></div>
   </div>
 </div>
 
-<script>
-// ─── CONFIG ───────────────────────────────────────────────────────────────────
-// Replace with your Railway backend URL after deploying backend
-  const API = 'https://kenya-watch-final-production.up.railway.app';
-
-// ─── NAV ──────────────────────────────────────────────────────────────────────
-function show(id) {
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.querySelectorAll('.nb').forEach(b => b.classList.remove('active'));
-  document.getElementById('v-' + id).classList.add('active');
-  const idx = ['dashboard','procurement','ghost','report','ai','about'].indexOf(id);
-  document.querySelectorAll('.nb')[idx].classList.add('active');
-  if (id === 'procurement') loadContracts();
-  if (id === 'ghost') loadGhost();
-  if (id === 'report') loadReports();
-}
-
-// ─── CLOCK ────────────────────────────────────────────────────────────────────
-setInterval(() => {
-  document.getElementById('clk').textContent = new Date().toLocaleTimeString('en-KE',{hour12:false}) + ' EAT';
-}, 1000);
-
-// ─── COUNTY BARS ─────────────────────────────────────────────────────────────
-setTimeout(() => document.querySelectorAll('.bar[data-w]').forEach(b => b.style.width = b.getAttribute('data-w')), 400);
-
-// ─── API ──────────────────────────────────────────────────────────────────────
-async function api(path, opts = {}) {
-  const r = await fetch(API + path, { headers: {'Content-Type':'application/json'}, ...opts });
-  return r.json();
-}
-
-// ─── STATS ────────────────────────────────────────────────────────────────────
-async function loadStats() {
-  try {
-    const { data } = await api('/api/stats');
-    const fmt = n => n >= 1e9 ? (n/1e9).toFixed(1)+'B' : n >= 1e6 ? (n/1e6).toFixed(0)+'M' : (n||0).toString();
-    document.getElementById('s1').textContent = data.contracts_flagged || 0;
-    document.getElementById('s2').textContent = data.ghost_projects || 0;
-    document.getElementById('s3').textContent = data.reports_30d || 0;
-    document.getElementById('s4').textContent = fmt(data.funds_at_risk || 0);
-    document.getElementById('flag-c').textContent = (data.contracts_flagged || 0) + ' FLAGS';
-    document.getElementById('du').textContent = 'Updated ' + new Date().toLocaleTimeString('en-KE',{hour12:false});
-  } catch { ['s1','s2','s3','s4'].forEach(i => document.getElementById(i).textContent = '--'); }
-}
-
-// ─── CONTRACTS ────────────────────────────────────────────────────────────────
-async function loadContracts() {
-  const tbody = document.getElementById('ctbl');
-  try {
-    const { data } = await api('/api/contracts');
-    if (!data?.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--t3)">No contracts found.</td></tr>'; return; }
-    tbody.innerHTML = data.map(c => {
-      const cls = c.risk_level==='HIGH'?'rh':c.risk_level==='MEDIUM'?'rm':'rl';
-      const flags = Array.isArray(c.flags) ? c.flags : JSON.parse(c.flags||'[]');
-      const bc = c.risk_level==='HIGH'?'bdr':c.risk_level==='MEDIUM'?'bda':'bdg2';
-      return `<tr>
-        <td style="font-family:var(--mono);font-size:11px;color:var(--t3)">${c.contract_id}</td>
-        <td>${c.description}</td><td>${c.county||'—'}</td>
-        <td>${parseInt(c.value||0).toLocaleString()}</td><td>${c.supplier}</td>
-        <td><span class="rs ${cls}">${c.risk_score} / ${c.risk_level}</span></td>
-        <td>${flags.slice(0,2).map(f=>`<span class="bdg ${bc}" style="margin:1px;display:inline-block">${f.slice(0,20)}</span>`).join('')}</td>
-      </tr>`;
-    }).join('');
-    const h=data.filter(c=>c.risk_level==='HIGH').length, m=data.filter(c=>c.risk_level==='MEDIUM').length, l=data.filter(c=>c.risk_level==='LOW').length, t=data.length||1;
-    document.getElementById('rdist').innerHTML = `
-      <div style="margin-bottom:16px"><div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:var(--red)">● High</span><span style="font-family:var(--mono)">${h} (${Math.round(h/t*100)}%)</span></div><div class="bw" style="height:10px"><div class="bar bh" style="width:${h/t*100}%"></div></div></div>
-      <div style="margin-bottom:16px"><div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:var(--amber)">● Medium</span><span style="font-family:var(--mono)">${m} (${Math.round(m/t*100)}%)</span></div><div class="bw" style="height:10px"><div class="bar bm" style="width:${m/t*100}%"></div></div></div>
-      <div><div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:var(--green)">● Low</span><span style="font-family:var(--mono)">${l} (${Math.round(l/t*100)}%)</span></div><div class="bw" style="height:10px"><div class="bar bl" style="width:${l/t*100}%"></div></div></div>
-      <div class="div"></div><div style="font-size:12px;color:var(--t2)">Monitoring <strong style="color:var(--text)">${t} contracts</strong> across 47 counties.</div>`;
-  } catch { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--red);font-size:12px">Failed to load. Check backend connection.</td></tr>'; }
-}
-
-// ─── GHOST PROJECTS ───────────────────────────────────────────────────────────
-async function loadGhost() {
-  const grid = document.getElementById('ggrid');
-  try {
-    const [{ data }, { data: stats }] = await Promise.all([api('/api/ghost-projects'), api('/api/ghost-projects/meta/stats')]);
-    document.getElementById('gtag').textContent = ((stats?.ghost_count||0) + (stats?.partial_count||0)) + ' ACTIVE FLAGS';
-    if (!data?.length) { grid.innerHTML = '<div style="color:var(--t3);font-size:13px">No ghost projects recorded.</div>'; return; }
-    grid.innerHTML = data.map(p => {
-      const s = p.detection_status;
-      const [bc,bl2,bg] = s==='ghost'?['#1a0800','#ff4444','bdr']:s==='partial'?['#1a1200','#ffb300','bda']:['#001a0a','#00e676','bdg2'];
-      const sat = s==='ghost'?'Empty land detected':s==='partial'?'~15% complete':'Structure confirmed';
-      const ac = s==='verified'?'var(--green)':s==='partial'?'var(--amber)':'var(--red)';
-      return `<div class="gpc">
-        <div class="gpi" style="background:${bc}">
-          <svg width="100%" height="120" viewBox="0 0 300 120"><rect width="300" height="120" fill="${bc}"/><rect x="30" y="20" width="240" height="80" rx="4" fill="none" stroke="${bl2}" stroke-width="0.8" stroke-dasharray="5"/><text x="150" y="55" text-anchor="middle" fill="${bl2}" font-size="11" font-family="Space Mono">SATELLITE VIEW</text><text x="150" y="73" text-anchor="middle" fill="#666" font-size="10" font-family="Space Mono">${sat}</text></svg>
-          <div style="position:absolute;top:8px;right:8px"><span class="bdg ${bl2}">${s.toUpperCase()}</span></div>
-        </div>
-        <div class="gpb">
-          <div class="gpn">${p.project_name}</div>
-          <div class="gpm">${p.contract_ref||'N/A'} · ${p.county||'KENYA'}</div>
-          <div class="gpcmp">
-            <div class="gpcol"><div class="gpll">Claimed</div><div>${p.claimed_status}</div></div>
-            <div class="gpcol"><div class="gpll">Satellite</div><div>${p.satellite_status}</div></div>
-          </div>
-          <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center">
-            <span style="font-family:var(--mono);font-size:11px;color:${ac}">KES ${parseInt(p.amount_at_risk||0).toLocaleString()}</span>
-            ${s!=='verified'?`<button class="btn br2" style="padding:6px 12px;font-size:10px">Report to EACC</button>`:`<span class="bdg bdg2">CLEAN</span>`}
-          </div>
-        </div>
-      </div>`;
-    }).join('');
-  } catch { grid.innerHTML = '<div style="color:var(--red);font-size:13px">Failed to load ghost projects.</div>'; }
-}
-
-// ─── REPORTS ──────────────────────────────────────────────────────────────────
-async function loadReports() {
-  const feed = document.getElementById('rfeed');
-  try {
-    const { data } = await api('/api/reports');
-    if (!data?.length) { feed.innerHTML = '<div style="font-size:13px;color:var(--t3)">No reports yet.</div>'; return; }
-    feed.innerHTML = data.slice(0,5).map(r => {
-      const bc = r.status==='resolved'?'bdg2':r.status==='pending'?'bda':'bdb';
-      return `<div class="fi"><div><span class="bdg ${bc}">${(r.type||'REPORT').slice(0,12).toUpperCase()}</span></div><div><div class="ft">${r.county||'Kenya'} · ${r.sector||'Gov'}</div><div class="fm">${r.case_number} · ${r.status.toUpperCase()} · Score: ${r.ai_credibility_score}</div></div></div>`;
-    }).join('');
-  } catch { feed.innerHTML = '<div style="font-size:13px;color:var(--t3)">Could not load.</div>'; }
-}
-
-// ─── SUBMIT REPORT ────────────────────────────────────────────────────────────
-async function submitReport() {
-  const type = document.getElementById('rtype').value;
-  const desc = document.getElementById('rdesc').value.trim();
-  const fb = document.getElementById('subfb');
-  if (!type || !desc) { showFb(fb,'Please fill in type and description.','r'); return; }
-  const btn = document.getElementById('subbtn');
-  btn.disabled = true; btn.innerHTML = '<span class="spi"></span> Submitting...';
-  try {
-    const { data, success, error } = await api('/api/reports', { method:'POST', body: JSON.stringify({
-      type, county: document.getElementById('rcounty').value,
-      sector: document.getElementById('rsector').value, description: desc,
-      amount: document.getElementById('ramount').value || null,
-      anonymous: document.getElementById('ranon').checked
-    })});
-    if (success) {
-      showFb(fb, `✅ Submitted. Case: <strong style="color:var(--green)">${data.case_number}</strong>. Routed to EACC.`, 'g');
-      document.getElementById('rdesc').value = '';
-    } else showFb(fb, '❌ ' + error, 'r');
-  } catch { showFb(fb, '❌ Network error. Try again.', 'r'); }
-  btn.disabled = false; btn.innerHTML = 'Submit Report Securely';
-}
-
-// ─── SCAN CONTRACT ────────────────────────────────────────────────────────────
-async function runScan() {
-  const id = document.getElementById('mid').value.trim();
-  const sup = document.getElementById('msup').value.trim();
-  const val = document.getElementById('mval').value;
-  const fb = document.getElementById('scanfb');
-  if (!id || !sup || !val) { showFb(fb,'Fill in Contract ID, Supplier, and Value.','r'); return; }
-  const btn = document.getElementById('scanbtn');
-  btn.disabled = true; btn.innerHTML = '<span class="spi"></span> Analysing...';
-  try {
-    const { data, success, error } = await api('/api/contracts/scan', { method:'POST', body: JSON.stringify({
-      contract_id: id, supplier: sup, description: document.getElementById('mdesc').value || 'N/A',
-      county: document.getElementById('mcounty').value, value: parseInt(val)
-    })});
-    if (success) {
-      const cls = data.risk_level==='HIGH'?'rh':data.risk_level==='MEDIUM'?'rm':'rl';
-      const flags = Array.isArray(data.flags)?data.flags:JSON.parse(data.flags||'[]');
-      showFb(fb,`<div style="margin-bottom:10px"><span class="rs ${cls}">SCORE: ${data.risk_score} / ${data.risk_level}</span></div>${flags.map(f=>`<div style="font-size:12px;padding:2px 0">• ${f}</div>`).join('')||'<div style="color:var(--green);font-size:12px">No flags.</div>'}`, 'g');
-      loadContracts();
-    } else showFb(fb,'❌ '+error,'r');
-  } catch { showFb(fb,'❌ Network error.','r'); }
-  btn.disabled = false; btn.innerHTML = 'Run AI Scan';
-}
-
-// ─── AI CHAT ─────────────────────────────────────────────────────────────────
-const SID = 'sess_' + Math.random().toString(36).slice(2);
-async function sendChat() {
-  const input = document.getElementById('cin');
-  const text = input.value.trim();
-  if (!text) return;
-  input.value = '';
-  addMsg('user', text);
-  document.getElementById('typi').classList.add('show');
-  const msgs = document.getElementById('msgs');
-  msgs.scrollTop = msgs.scrollHeight;
-  try {
-    const { reply, success, error } = await api('/api/ai/chat', { method:'POST', body: JSON.stringify({ message: text, session_id: SID }) });
-    document.getElementById('typi').classList.remove('show');
-    addMsg('ai', (success ? reply : error||'Error').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>'));
-  } catch {
-    document.getElementById('typi').classList.remove('show');
-    addMsg('ai','<strong>Connection error.</strong> Check your internet and try again.');
-  }
-  msgs.scrollTop = msgs.scrollHeight;
-}
-function addMsg(role, text) {
-  const msgs = document.getElementById('msgs');
-  const d = document.createElement('div');
-  if (role==='ai') { d.innerHTML=`<div class="mlbl">KENYAWATCH AI</div><div class="mai">${text}</div>`; }
-  else { d.style.cssText='display:flex;justify-content:flex-end'; d.innerHTML=`<div><div class="mlbl" style="text-align:right">YOU</div><div class="muser">${text}</div></div>`; }
-  msgs.appendChild(d);
-  msgs.scrollTop = msgs.scrollHeight;
-}
-function qQ(q) { document.getElementById('cin').value = q; sendChat(); }
-
-// ─── MODAL ────────────────────────────────────────────────────────────────────
-function openM(id) { document.getElementById(id).classList.add('show'); }
-function closeM(id) { document.getElementById(id).classList.remove('show'); document.getElementById('scanfb').className='fb'; }
-document.querySelectorAll('.mo').forEach(m => m.addEventListener('click', e => { if(e.target===m) m.classList.remove('show'); }));
-
-// ─── FEEDBACK ─────────────────────────────────────────────────────────────────
-function showFb(el, msg, type) {
-  el.className = 'fb show ' + (type==='g'?'fbg':'fbr');
-  el.innerHTML = msg;
-}
-
-// ─── INIT ─────────────────────────────────────────────────────────────────────
-loadStats();
-</script>
-  <!-- ═══════════════════════════════════════════════════════════════════
-     KENYAWATCH AI CHATBOT WIDGET
-     Paste ALL of this just before the closing </body> tag in index.html
-     It works automatically — no other changes needed.
-════════════════════════════════════════════════════════════════════ -->
-
-<style>
-#kw-trigger{position:fixed;bottom:24px;right:24px;width:60px;height:60px;background:#00c853;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(0,200,83,.4);z-index:9999;transition:transform .2s,box-shadow .2s}
-#kw-trigger:hover{transform:scale(1.08);box-shadow:0 6px 28px rgba(0,200,83,.55)}
-#kw-trigger svg{width:28px;height:28px;fill:#000}
-#kw-badge{position:absolute;top:-4px;right:-4px;background:#ff4444;color:#fff;border-radius:50%;width:18px;height:18px;font-size:10px;font-weight:700;display:none;align-items:center;justify-content:center}
-#kw-window{position:fixed;bottom:96px;right:24px;width:380px;height:560px;background:#111618;border:1px solid #1f2a2d;border-radius:16px;display:flex;flex-direction:column;z-index:9999;transform:scale(.9) translateY(20px);opacity:0;pointer-events:none;transition:transform .25s cubic-bezier(.34,1.56,.64,1),opacity .2s;box-shadow:0 20px 60px rgba(0,0,0,.6)}
-#kw-window.open{transform:scale(1) translateY(0);opacity:1;pointer-events:all}
-#kw-header{background:#0d4a27;border-radius:16px 16px 0 0;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #1a3a20;flex-shrink:0}
-.kw-hl{display:flex;align-items:center;gap:10px}
-.kw-av{width:38px;height:38px;background:#00c853;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#000;flex-shrink:0;position:relative}
-.kw-on{position:absolute;bottom:1px;right:1px;width:10px;height:10px;background:#00e676;border-radius:50%;border:2px solid #0d4a27}
-.kw-ttl{font-weight:700;font-size:14px;color:#fff}
-.kw-sub{font-size:11px;color:#9fe1cb}
-.kw-acts{display:flex;gap:6px}
-.kw-xb{background:rgba(0,0,0,.3);border:none;color:#9fe1cb;width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:background .15s}
-.kw-xb:hover{background:rgba(0,0,0,.5);color:#fff}
-#kw-quick{display:flex;gap:6px;padding:10px 12px;overflow-x:auto;flex-shrink:0;border-bottom:1px solid #1f2a2d;scrollbar-width:none}
-#kw-quick::-webkit-scrollbar{display:none}
-.kw-qr{white-space:nowrap;background:#0d4a27;border:1px solid #1b6b3a;color:#9fe1cb;font-size:11px;padding:5px 10px;border-radius:20px;cursor:pointer;transition:background .15s;flex-shrink:0}
-.kw-qr:hover{background:#1b6b3a;color:#fff}
-#kw-msgs{flex:1;overflow-y:auto;padding:14px 12px;display:flex;flex-direction:column;gap:10px;scrollbar-width:thin;scrollbar-color:#1f2a2d transparent}
-#kw-msgs::-webkit-scrollbar{width:4px}
-#kw-msgs::-webkit-scrollbar-thumb{background:#1f2a2d;border-radius:2px}
-.kw-m{display:flex;gap:8px;animation:kwf .25s ease}
-@keyframes kwf{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-.kw-m.u{flex-direction:row-reverse}
-.kw-b{max-width:78%;padding:10px 13px;border-radius:14px;font-size:13px;line-height:1.55}
-.kw-m.a .kw-b{background:#141a1c;border:1px solid #1f2a2d;border-bottom-left-radius:4px;color:#e8f0f2}
-.kw-m.a .kw-b strong{color:#00c853}
-.kw-m.u .kw-b{background:#00c853;color:#000;font-weight:500;border-bottom-right-radius:4px}
-.kw-sm{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;margin-top:2px}
-.kw-m.a .kw-sm{background:#0d4a27;color:#00c853}
-.kw-m.u .kw-sm{background:#005c2a;color:#00c853}
-.kw-t{font-size:10px;color:#4a6570;margin-top:2px;text-align:right}
-.kw-m.a .kw-t{text-align:left}
-#kw-typing{display:none;align-items:center;gap:8px;padding:2px 0}
-#kw-typing.show{display:flex}
-.kw-d{width:7px;height:7px;background:#00c853;border-radius:50%;animation:kwb 1.2s infinite}
-.kw-d:nth-child(2){animation-delay:.2s}
-.kw-d:nth-child(3){animation-delay:.4s}
-@keyframes kwb{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
-#kw-foot{padding:10px 12px;border-top:1px solid #1f2a2d;display:flex;gap:8px;flex-shrink:0}
-#kw-inp{flex:1;background:#0a0e0f;border:1px solid #1f2a2d;border-radius:10px;color:#e8f0f2;font-size:13px;padding:9px 13px;outline:none;transition:border-color .2s;resize:none;height:38px;font-family:inherit}
-#kw-inp:focus{border-color:#00c853}
-#kw-inp::placeholder{color:#4a6570}
-#kw-snd{width:38px;height:38px;background:#00c853;border:none;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s,transform .15s;flex-shrink:0}
-#kw-snd:hover{background:#00e676;transform:scale(1.05)}
-#kw-snd:disabled{background:#1f2a2d;cursor:not-allowed;transform:none}
-#kw-snd svg{width:16px;height:16px;fill:#000}
-#kw-pwr{text-align:center;padding:6px;font-size:10px;color:#4a6570;border-top:1px solid #1a1f20;flex-shrink:0}
-@media(max-width:440px){#kw-window{width:calc(100vw - 16px);right:8px;bottom:84px;height:75vh}}
-</style>
-
-<!-- Trigger button -->
-<button id="kw-trigger" onclick="kwToggle()" aria-label="Chat with KenyaWatch AI">
+<!-- CHATBOT WIDGET -->
+<button id="kw-trig" onclick="kwToggle()" aria-label="Chat with KenyaWatch AI">
   <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>
   <span id="kw-badge"></span>
 </button>
 
-<!-- Chat window -->
-<div id="kw-window">
-  <div id="kw-header">
-    <div class="kw-hl">
-      <div class="kw-av">AI<div class="kw-on"></div></div>
-      <div><div class="kw-ttl">KenyaWatch AI</div><div class="kw-sub">Anti-Corruption Assistant · Online</div></div>
+<div id="kw-win">
+  <div id="kw-hdr">
+    <div class="kwhl">
+      <div class="kwav">AI<div class="kwon"></div></div>
+      <div><div class="kwtitle">KenyaWatch AI</div><div class="kwsub">Anti-Corruption Assistant · Online</div></div>
     </div>
-    <div class="kw-acts">
-      <button class="kw-xb" onclick="kwClear()" title="Clear">&#x1F5D1;</button>
-      <button class="kw-xb" onclick="kwToggle()" title="Close">&#x2715;</button>
+    <div class="kwacts">
+      <button class="kwbtn" onclick="kwClear()" title="Clear">&#x1F5D1;</button>
+      <button class="kwbtn" onclick="kwToggle()" title="Close">&#x2715;</button>
     </div>
   </div>
-  <div id="kw-quick">
-    <button class="kw-qr" onclick="kwQ('How do I report corruption?')">Report corruption</button>
-    <button class="kw-qr" onclick="kwQ('Show me high-risk contracts')">High-risk contracts</button>
-    <button class="kw-qr" onclick="kwQ('What are ghost projects?')">Ghost projects</button>
-    <button class="kw-qr" onclick="kwQ('How does AI scoring work?')">AI scoring</button>
-    <button class="kw-qr" onclick="kwQ('EACC contact details')">EACC contacts</button>
-    <button class="kw-qr" onclick="kwQ('Which counties have highest corruption risk?')">County risk</button>
+  <div id="kw-qr">
+    <button class="kwq" onclick="kwQ('How do I report corruption?')">Report corruption</button>
+    <button class="kwq" onclick="kwQ('Show me high-risk contracts')">High-risk contracts</button>
+    <button class="kwq" onclick="kwQ('What are ghost projects?')">Ghost projects</button>
+    <button class="kwq" onclick="kwQ('EACC contact details')">EACC contacts</button>
+    <button class="kwq" onclick="kwQ('How does AI scoring work?')">AI scoring</button>
+    <button class="kwq" onclick="kwQ('Habari, nisaidie')">Kiswahili</button>
   </div>
   <div id="kw-msgs">
-    <div class="kw-m a">
-      <div class="kw-sm">AI</div>
-      <div>
-        <div class="kw-b"><strong>Habari! I'm KenyaWatch AI</strong> 👋<br><br>I'm your anti-corruption intelligence assistant for Kenya.<br><br>I can help you report corruption anonymously, analyse government contracts, track ghost projects, and connect you to <strong>EACC, DPP, or PPRA</strong>.<br><br>What would you like to do?</div>
-        <div class="kw-t">Now</div>
-      </div>
-    </div>
-    <div id="kw-typing" class="kw-m a">
-      <div class="kw-sm">AI</div>
-      <div class="kw-b" style="padding:12px 16px"><div style="display:flex;gap:5px"><div class="kw-d"></div><div class="kw-d"></div><div class="kw-d"></div></div></div>
-    </div>
+    <div class="kwm a"><div class="kwsm">AI</div><div><div class="kwb"><strong>Habari! I'm KenyaWatch AI</strong> 👋<br><br>Your anti-corruption intelligence assistant for Kenya.<br><br>I can help you report corruption, analyse contracts, track ghost projects, and connect you to <strong>EACC, DPP, PPRA</strong>.<br><br>What would you like to do?</div><div class="kwt">Now</div></div></div>
+    <div id="kw-typing" class="kwm a"><div class="kwsm">AI</div><div class="kwb" style="padding:10px 14px"><div style="display:flex;gap:4px"><div class="kwd"></div><div class="kwd"></div><div class="kwd"></div></div></div></div>
   </div>
   <div id="kw-foot">
-    <textarea id="kw-inp" placeholder="Ask about contracts, corruption, or reporting..." rows="1"
+    <textarea id="kw-inp" placeholder="Ask about contracts, corruption, reporting..." rows="1"
       onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();kwSend()}"
-      oninput="this.style.height='38px';this.style.height=Math.min(this.scrollHeight,100)+'px'"></textarea>
-    <button id="kw-snd" onclick="kwSend()"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
+      oninput="this.style.height='36px';this.style.height=Math.min(this.scrollHeight,90)+'px'"></textarea>
+    <button id="kw-send" onclick="kwSend()"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
   </div>
-  <div id="kw-pwr">Powered by Claude AI &nbsp;·&nbsp; KenyaWatch AI v2.0</div>
+  <div id="kw-pwr">Powered by Claude AI · KenyaWatch v3.0</div>
 </div>
 
 <script>
-(function(){
-  const API = (window.KENYAWATCH_API || window.location.origin) + '/api/chatbot/message';
-  const SID = 'kw_' + Math.random().toString(36).slice(2,10);
-  let open=false, busy=false, unread=0;
+// ── CONFIG ────────────────────────────────────────────────────────────────────
+const API = window.KENYAWATCH_API || 'https://kenya-watch-final-production.up.railway.app';
 
-  window.kwToggle=function(){
-    open=!open;
-    document.getElementById('kw-window').classList.toggle('open',open);
-    if(open){unread=0;const b=document.getElementById('kw-badge');b.style.display='none';setTimeout(()=>document.getElementById('kw-inp').focus(),300);}
-  };
-
-  window.kwSend=async function(){
-    const inp=document.getElementById('kw-inp');
-    const txt=inp.value.trim();
-    if(!txt||busy)return;
-    inp.value='';inp.style.height='38px';
-    kwAdd('u',txt);kwTyping(true);busy=true;
-    document.getElementById('kw-snd').disabled=true;
-    try{
-      const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:txt,session_id:SID})});
-      const d=await r.json();
-      kwTyping(false);
-      kwAdd('a',d.success?d.reply:'Sorry, something went wrong. Please try again.',d.fallback);
-    }catch(e){
-      kwTyping(false);
-      kwAdd('a',kwFb(txt),true);
-    }
-    busy=false;document.getElementById('kw-snd').disabled=false;document.getElementById('kw-inp').focus();
-  };
-
-  window.kwQ=function(t){document.getElementById('kw-inp').value=t;kwSend();if(!open)kwToggle();};
-
-  window.kwClear=function(){
-    const m=document.getElementById('kw-msgs'),ty=document.getElementById('kw-typing');
-    Array.from(m.children).forEach(el=>{if(el!==ty)el.remove();});
-    kwAdd('a','**Chat cleared.** How can I help you?');
-    fetch((window.KENYAWATCH_API||window.location.origin)+'/api/chatbot/history/'+SID,{method:'DELETE'}).catch(()=>{});
-  };
-
-  function kwAdd(role,text,fb=false){
-    const m=document.getElementById('kw-msgs'),ty=document.getElementById('kw-typing');
-    const d=document.createElement('div');d.className='kw-m '+role;
-    const t=new Date().toLocaleTimeString('en-KE',{hour:'2-digit',minute:'2-digit'});
-    const f=text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
-    d.innerHTML=`<div class="kw-sm">${role==='a'?'AI':'You'}</div><div><div class="kw-b">${f}</div><div class="kw-t">${t}${fb?' · offline':''}</div></div>`;
-    m.insertBefore(d,ty);m.scrollTop=m.scrollHeight;
-    if(role==='a'&&!open){unread++;const b=document.getElementById('kw-badge');b.textContent=unread;b.style.display='flex';}
-  }
-
-  function kwTyping(s){
-    const ty=document.getElementById('kw-typing'),m=document.getElementById('kw-msgs');
-    ty.classList.toggle('show',s);if(s)m.scrollTop=m.scrollHeight;
-  }
-
-  function kwFb(msg){
-    const m=msg.toLowerCase();
-    if(m.includes('report')||m.includes('bribe')||m.includes('corruption'))return '📋 Use the **Report** section in the app, or call **EACC: 0800 720 880** (free, 24/7). Your identity is fully protected.';
-    if(m.includes('contract')||m.includes('procurement'))return 'Go to **📋 Procurement** to scan and view government contracts with AI risk scores.';
-    if(m.includes('ghost')||m.includes('satellite'))return 'Check **👻 Ghost Projects** to see satellite-verified infrastructure detections.';
-    return '⚠️ Connection issue. Try again or call **EACC: 0800 720 880**';
-  }
-
-  setTimeout(()=>{if(!open){unread=1;const b=document.getElementById('kw-badge');b.textContent='1';b.style.display='flex';}},3000);
-})();
-</script>
-
-<!-- ═══ END CHATBOT WIDGET ═══ -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>KenyaWatch AI — Chatbot Test</title>
-<style>
-/* ── Reset & base ── */
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0e0f;color:#e8f0f2;min-height:100vh;display:flex;align-items:center;justify-content:center}
-
-/* ── Chat bubble (trigger) ── */
-#kw-trigger{
-  position:fixed;bottom:24px;right:24px;width:60px;height:60px;
-  background:#00c853;border-radius:50%;border:none;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  box-shadow:0 4px 20px rgba(0,200,83,.4);z-index:9999;
-  transition:transform .2s,box-shadow .2s;
-}
-#kw-trigger:hover{transform:scale(1.08);box-shadow:0 6px 28px rgba(0,200,83,.55)}
-#kw-trigger svg{width:28px;height:28px;fill:#000}
-#kw-badge{
-  position:absolute;top:-4px;right:-4px;background:#ff4444;color:#fff;
-  border-radius:50%;width:18px;height:18px;font-size:10px;font-weight:700;
-  display:flex;align-items:center;justify-content:center;display:none;
+// ── NAV ───────────────────────────────────────────────────────────────────────
+function show(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(b => b.classList.remove('active'));
+  document.getElementById('v-'+id).classList.add('active');
+  const map={dashboard:0,procurement:1,ghost:2,report:3,ai:4,about:5};
+  document.querySelectorAll('.nb')[map[id]]?.classList.add('active');
+  if(id==='procurement')loadContracts();
+  if(id==='ghost')loadGhost();
+  if(id==='report')loadReports();
 }
 
-/* ── Chat window ── */
-#kw-window{
-  position:fixed;bottom:96px;right:24px;width:380px;height:560px;
-  background:#111618;border:1px solid #1f2a2d;border-radius:16px;
-  display:flex;flex-direction:column;z-index:9999;
-  transform:scale(.9) translateY(20px);opacity:0;pointer-events:none;
-  transition:transform .25s cubic-bezier(.34,1.56,.64,1),opacity .2s;
-  box-shadow:0 20px 60px rgba(0,0,0,.6);
-}
-#kw-window.open{transform:scale(1) translateY(0);opacity:1;pointer-events:all}
+// ── CLOCK ─────────────────────────────────────────────────────────────────────
+setInterval(()=>{document.getElementById('clock-el').textContent=new Date().toLocaleTimeString('en-KE',{hour12:false})+' EAT';},1000);
 
-/* ── Header ── */
-#kw-header{
-  background:#0d4a27;border-radius:16px 16px 0 0;padding:14px 16px;
-  display:flex;align-items:center;justify-content:space-between;
-  border-bottom:1px solid #1a3a20;flex-shrink:0;
-}
-.kw-h-left{display:flex;align-items:center;gap:10px}
-.kw-avatar{
-  width:38px;height:38px;background:#00c853;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;font-weight:800;
-  font-size:14px;color:#000;flex-shrink:0;position:relative;
-}
-.kw-online{
-  position:absolute;bottom:1px;right:1px;width:10px;height:10px;
-  background:#00e676;border-radius:50%;border:2px solid #0d4a27;
-}
-.kw-title{font-weight:700;font-size:14px;color:#fff}
-.kw-sub{font-size:11px;color:#9fe1cb}
-.kw-actions{display:flex;gap:6px}
-.kw-btn{
-  background:rgba(0,0,0,.3);border:none;color:#9fe1cb;width:30px;height:30px;
-  border-radius:8px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;
-  transition:background .15s;
-}
-.kw-btn:hover{background:rgba(0,0,0,.5);color:#fff}
-
-/* ── Quick replies ── */
-#kw-quick{
-  display:flex;gap:6px;padding:10px 12px;overflow-x:auto;flex-shrink:0;
-  border-bottom:1px solid #1f2a2d;scrollbar-width:none;
-}
-#kw-quick::-webkit-scrollbar{display:none}
-.kw-qr{
-  white-space:nowrap;background:#0d4a27;border:1px solid #1b6b3a;
-  color:#9fe1cb;font-size:11px;padding:5px 10px;border-radius:20px;
-  cursor:pointer;transition:background .15s;flex-shrink:0;
-}
-.kw-qr:hover{background:#1b6b3a;color:#fff}
-
-/* ── Messages ── */
-#kw-messages{
-  flex:1;overflow-y:auto;padding:14px 12px;display:flex;flex-direction:column;gap:10px;
-  scrollbar-width:thin;scrollbar-color:#1f2a2d transparent;
-}
-#kw-messages::-webkit-scrollbar{width:4px}
-#kw-messages::-webkit-scrollbar-thumb{background:#1f2a2d;border-radius:2px}
-
-.kw-msg{display:flex;gap:8px;animation:kw-fade .25s ease}
-@keyframes kw-fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-.kw-msg.user{flex-direction:row-reverse}
-
-.kw-bubble{
-  max-width:78%;padding:10px 13px;border-radius:14px;font-size:13px;line-height:1.55;
-}
-.kw-msg.ai .kw-bubble{
-  background:#141a1c;border:1px solid #1f2a2d;
-  border-bottom-left-radius:4px;color:#e8f0f2;
-}
-.kw-msg.ai .kw-bubble strong{color:#00c853}
-.kw-msg.user .kw-bubble{
-  background:#00c853;color:#000;font-weight:500;
-  border-bottom-right-radius:4px;
-}
-.kw-av-sm{
-  width:28px;height:28px;border-radius:50%;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;
-  font-size:11px;font-weight:700;margin-top:2px;
-}
-.kw-msg.ai .kw-av-sm{background:#0d4a27;color:#00c853}
-.kw-msg.user .kw-av-sm{background:#005c2a;color:#00c853}
-
-.kw-time{font-size:10px;color:#4a6570;margin-top:2px;text-align:right}
-.kw-msg.ai .kw-time{text-align:left}
-
-/* ── Typing indicator ── */
-#kw-typing{display:none;align-items:center;gap:8px;padding:2px 0}
-#kw-typing.show{display:flex}
-.kw-dot{
-  width:7px;height:7px;background:#00c853;border-radius:50%;
-  animation:kw-bounce 1.2s infinite;
-}
-.kw-dot:nth-child(2){animation-delay:.2s}
-.kw-dot:nth-child(3){animation-delay:.4s}
-@keyframes kw-bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
-
-/* ── Input area ── */
-#kw-footer{
-  padding:10px 12px;border-top:1px solid #1f2a2d;
-  display:flex;gap:8px;flex-shrink:0;
-}
-#kw-input{
-  flex:1;background:#0a0e0f;border:1px solid #1f2a2d;border-radius:10px;
-  color:#e8f0f2;font-size:13px;padding:9px 13px;outline:none;
-  transition:border-color .2s;resize:none;height:38px;font-family:inherit;
-}
-#kw-input:focus{border-color:#00c853}
-#kw-input::placeholder{color:#4a6570}
-#kw-send{
-  width:38px;height:38px;background:#00c853;border:none;border-radius:10px;
-  cursor:pointer;display:flex;align-items:center;justify-content:center;
-  transition:background .2s,transform .15s;flex-shrink:0;
-}
-#kw-send:hover{background:#00e676;transform:scale(1.05)}
-#kw-send:disabled{background:#1f2a2d;cursor:not-allowed;transform:none}
-#kw-send svg{width:16px;height:16px;fill:#000}
-
-/* ── Powered by ── */
-#kw-powered{
-  text-align:center;padding:6px;font-size:10px;color:#4a6570;
-  border-top:1px solid #1a1f20;flex-shrink:0;
+// ── API ───────────────────────────────────────────────────────────────────────
+async function api(path,opts={}) {
+  const r=await fetch(API+path,{headers:{'Content-Type':'application/json'},...opts});
+  return r.json();
 }
 
-/* ── Mobile ── */
-@media(max-width:440px){
-  #kw-window{width:calc(100vw - 16px);right:8px;bottom:84px;height:75vh}
-}
-</style>
-</head>
-<body>
-
-<!-- ═══════════════════════════════════════════
-     CHATBOT WIDGET — copy everything below
-     the <body> tag into your index.html
-════════════════════════════════════════════ -->
-
-<!-- Trigger bubble -->
-<button id="kw-trigger" onclick="kwToggle()" aria-label="Open KenyaWatch AI chat">
-  <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>
-  <span id="kw-badge">1</span>
-</button>
-
-<!-- Chat window -->
-<div id="kw-window">
-  <!-- Header -->
-  <div id="kw-header">
-    <div class="kw-h-left">
-      <div class="kw-avatar">AI<div class="kw-online"></div></div>
-      <div>
-        <div class="kw-title">KenyaWatch AI</div>
-        <div class="kw-sub">Anti-Corruption Assistant</div>
-      </div>
-    </div>
-    <div class="kw-actions">
-      <button class="kw-btn" onclick="kwClear()" title="Clear chat">&#x1F5D1;</button>
-      <button class="kw-btn" onclick="kwToggle()" title="Close">&#x2715;</button>
-    </div>
-  </div>
-
-  <!-- Quick replies -->
-  <div id="kw-quick">
-    <button class="kw-qr" onclick="kwQuick('How do I report corruption?')">Report corruption</button>
-    <button class="kw-qr" onclick="kwQuick('Show me high-risk contracts')">High-risk contracts</button>
-    <button class="kw-qr" onclick="kwQuick('What are ghost projects?')">Ghost projects</button>
-    <button class="kw-qr" onclick="kwQuick('How does the AI scoring work?')">AI scoring</button>
-    <button class="kw-qr" onclick="kwQuick('EACC contact details')">EACC contacts</button>
-    <button class="kw-qr" onclick="kwQuick('Which counties have the highest corruption risk?')">County risk</button>
-  </div>
-
-  <!-- Messages -->
-  <div id="kw-messages">
-    <div class="kw-msg ai">
-      <div class="kw-av-sm">AI</div>
-      <div>
-        <div class="kw-bubble">
-          <strong>Habari! I'm KenyaWatch AI</strong> 👋<br><br>
-          I'm your anti-corruption intelligence assistant for Kenya.<br><br>
-          I can help you:<br>
-          • Report corruption anonymously<br>
-          • Analyse government contracts<br>
-          • Track ghost projects<br>
-          • Connect you to EACC, DPP, PPRA<br><br>
-          What would you like to do?
-        </div>
-        <div class="kw-time">Now</div>
-      </div>
-    </div>
-    <div id="kw-typing" class="kw-msg ai">
-      <div class="kw-av-sm">AI</div>
-      <div class="kw-bubble" style="padding:12px 16px">
-        <div style="display:flex;gap:5px;align-items:center">
-          <div class="kw-dot"></div>
-          <div class="kw-dot"></div>
-          <div class="kw-dot"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Input -->
-  <div id="kw-footer">
-    <textarea id="kw-input" placeholder="Ask about contracts, corruption, or reporting..." rows="1"
-      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();kwSend()}"
-      oninput="this.style.height='38px';this.style.height=Math.min(this.scrollHeight,100)+'px'"></textarea>
-    <button id="kw-send" onclick="kwSend()">
-      <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-    </button>
-  </div>
-
-  <div id="kw-powered">Powered by Claude AI &nbsp;·&nbsp; KenyaWatch v2.0</div>
-</div>
-
-<script>
-// ── Configuration ─────────────────────────────────────────────────────────────
-// Uses window.KENYAWATCH_API if set, otherwise falls back to same origin
-const API_BASE = (window.KENYAWATCH_API || window.location.origin);
-const CHATBOT_URL = API_BASE + '/api/chatbot/message';
-
-// ── Session ───────────────────────────────────────────────────────────────────
-const SESSION_ID = 'kw_' + Math.random().toString(36).slice(2, 10);
-let isOpen = false;
-let isThinking = false;
-let unread = 0;
-
-// ── Toggle ────────────────────────────────────────────────────────────────────
-function kwToggle() {
-  isOpen = !isOpen;
-  const win = document.getElementById('kw-window');
-  win.classList.toggle('open', isOpen);
-  if (isOpen) {
-    unread = 0;
-    document.getElementById('kw-badge').style.display = 'none';
-    setTimeout(() => document.getElementById('kw-input').focus(), 300);
-  }
-}
-
-// ── Send message ──────────────────────────────────────────────────────────────
-async function kwSend() {
-  const input = document.getElementById('kw-input');
-  const text = input.value.trim();
-  if (!text || isThinking) return;
-
-  input.value = '';
-  input.style.height = '38px';
-  kwAppend('user', text);
-  kwShowTyping(true);
-  isThinking = true;
-  document.getElementById('kw-send').disabled = true;
-
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
+async function loadDashboard() {
   try {
-    const res = await fetch(CHATBOT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: text, session_id: SESSION_ID }),
-    });
+    const [{data},cRes,gRes,rRes] = await Promise.all([
+      api('/api/stats'),
+      api('/api/contracts/analytics'),
+      api('/api/ghost-projects/meta/stats'),
+      api('/api/reports/meta/stats'),
+    ]);
 
-    const data = await res.json();
-    kwShowTyping(false);
+    const fmt=n=>n>=1e9?(n/1e9).toFixed(1)+'B':n>=1e6?(n/1e6).toFixed(0)+'M':(n||0).toString();
+    document.getElementById('s1').textContent=data.contracts_flagged||0;
+    document.getElementById('s2').textContent=data.ghost_projects||0;
+    document.getElementById('s3').textContent=data.reports_30d||0;
+    document.getElementById('s4').textContent=fmt(data.funds_at_risk||0);
+    document.getElementById('flag-c').textContent=(data.contracts_flagged||0)+' FLAGS';
+    document.getElementById('du').textContent='Updated '+new Date().toLocaleTimeString('en-KE',{hour12:false});
 
-    if (data.success) {
-      kwAppend('ai', data.reply, data.fallback);
-    } else {
-      kwAppend('ai', 'Sorry, something went wrong. Please try again.');
+    // County bars from analytics
+    if(cRes.success&&cRes.data?.county_breakdown) {
+      const counties=cRes.data.county_breakdown.slice(0,8);
+      const max=Math.max(...counties.map(c=>c.avg_risk||0))||100;
+      document.getElementById('county-bars').innerHTML=counties.map(c=>{
+        const cls=c.avg_risk>=75?'ph':c.avg_risk>=40?'pm':'pl';
+        return `<div class="ci"><div class="cn">${c.county}</div><div class="bw"><div class="bar ${cls}" style="width:${(c.avg_risk/max)*100}%"></div></div><div class="cv">${c.avg_risk}</div></div>`;
+      }).join('');
     }
-  } catch (err) {
-    kwShowTyping(false);
-    // Use client-side fallback if network fails
-    kwAppend('ai', kwClientFallback(text));
-  }
 
-  isThinking = false;
-  document.getElementById('kw-send').disabled = false;
-  document.getElementById('kw-input').focus();
+    // Risk distribution
+    if(cRes.success&&cRes.data?.risk_distribution) {
+      const rd=cRes.data.risk_distribution;
+      const total=rd.reduce((s,r)=>s+parseInt(r.count),0)||1;
+      document.getElementById('risk-dist').innerHTML=rd.map(r=>{
+        const cls=r.risk_level==='HIGH'?'ph':r.risk_level==='MEDIUM'?'pm':'pl';
+        const tc=r.risk_level==='HIGH'?'var(--red)':r.risk_level==='MEDIUM'?'var(--amber)':'var(--green)';
+        return `<div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:13px"><span style="color:${tc}">● ${r.risk_level}</span><span style="font-family:var(--mono);font-size:11px">${r.count} (${Math.round(r.count/total*100)}%)</span></div><div class="pbar"><div class="pfill ${cls}" style="width:${r.count/total*100}%"></div></div></div>`;
+      }).join('');
+    }
+
+    // Sector breakdown
+    if(cRes.success&&cRes.data?.sector_breakdown) {
+      const sd=cRes.data.sector_breakdown.slice(0,5);
+      const max2=Math.max(...sd.map(s=>s.avg_risk||0))||100;
+      document.getElementById('sector-dist').innerHTML=sd.map(s=>{
+        const cls=s.avg_risk>=75?'ph':s.avg_risk>=40?'pm':'pl';
+        return `<div class="ci"><div class="cn" style="width:110px">${s.sector}</div><div class="bw"><div class="bar ${cls}" style="width:${(s.avg_risk/max2)*100}%"></div></div><div class="cv">${s.avg_risk}</div></div>`;
+      }).join('');
+    }
+
+    // Live feed from reports
+    const rfRes=await api('/api/reports?limit=5');
+    if(rfRes.success) {
+      const reports=rfRes.data||[];
+      if(reports.length) {
+        document.getElementById('live-feed').innerHTML=reports.map(r=>{
+          const bg=r.status==='resolved'?'fig':r.status==='pending'?'fir':'fib';
+          const icon=r.status==='resolved'?'✅':r.status==='escalated'?'🚨':'🔍';
+          return `<div class="feed-item"><div class="fic ${bg}">${icon}</div><div><div class="ft">${r.type} — ${r.county||'Kenya'}</div><div class="fm">${r.case_number} · ${r.status.toUpperCase()} · Score: ${r.ai_credibility_score}</div></div></div>`;
+        }).join('');
+      }
+    }
+
+    // Health panel
+    const hRes=await api('/health');
+    document.getElementById('health-panel').innerHTML=`
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px"><span>Backend API</span><span class="badge ${hRes.status==='ok'?'bl':'bh'}">${hRes.status==='ok'?'ONLINE':'DEGRADED'}</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px"><span>Database</span><span class="badge ${hRes.database==='connected'?'bl':'bh'}">${hRes.database?.toUpperCase()}</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px"><span>AI Service</span><span class="badge ${hRes.ai==='configured'?'bl':'ba'}">${hRes.ai==='configured'?'READY':'NEEDS KEY'}</span></div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--t3);margin-top:4px">v${hRes.version||'3.0.0'} · ${new Date(hRes.timestamp||Date.now()).toLocaleTimeString('en-KE')}</div>
+      </div>`;
+
+  } catch(e) {
+    document.getElementById('s1').textContent='--';
+    console.error('Dashboard error:',e.message);
+  }
 }
 
-// ── Quick reply ───────────────────────────────────────────────────────────────
-function kwQuick(text) {
-  document.getElementById('kw-input').value = text;
-  kwSend();
-  if (!isOpen) kwToggle();
+// ── CONTRACTS ─────────────────────────────────────────────────────────────────
+async function loadContracts() {
+  const tbody=document.getElementById('ctbl');
+  try {
+    const q=document.getElementById('search-q')?.value||'';
+    const risk=document.getElementById('filter-risk')?.value||'';
+    const county=document.getElementById('filter-county')?.value||'';
+    const sector=document.getElementById('filter-sector')?.value||'';
+    let url=`/api/contracts?limit=40`;
+    if(q)url+=`&search=${encodeURIComponent(q)}`;
+    if(risk)url+=`&risk_level=${risk}`;
+    if(county)url+=`&county=${encodeURIComponent(county)}`;
+    if(sector)url+=`&sector=${encodeURIComponent(sector)}`;
+
+    const {data,total,success}=await api(url);
+    if(!success||!data?.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--t3)">No contracts found.</td></tr>';return;}
+
+    tbody.innerHTML=data.map(c=>{
+      const cls=c.risk_level==='HIGH'?'bh':c.risk_level==='MEDIUM'?'bm':'bl';
+      const flags=Array.isArray(c.flags)?c.flags:[];
+      return `<tr>
+        <td style="font-family:var(--mono);font-size:10px;color:var(--t3)">${c.contract_id}</td>
+        <td style="max-width:200px;font-size:12px">${c.description?.slice(0,60)}${c.description?.length>60?'...':''}</td>
+        <td>${c.county||'—'}</td>
+        <td><span class="badge bb">${c.sector||'—'}</span></td>
+        <td style="font-family:var(--mono);font-size:11px">${parseInt(c.value||0).toLocaleString()}</td>
+        <td style="font-size:12px">${c.supplier?.slice(0,22)}${c.supplier?.length>22?'...':''}</td>
+        <td><span class="badge ${cls}">${c.risk_score}/100</span></td>
+        <td><button class="btn btn-o btn-sm" onclick='showFlags(${JSON.stringify(flags.slice(0,3))})'>Flags</button></td>
+      </tr>`;
+    }).join('');
+    document.getElementById('ctracts-footer').textContent=`Showing ${data.length} of ${total||data.length} contracts`;
+  } catch(e){tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--red);font-size:12px">Failed to load. Check backend connection.</td></tr>`;}
 }
 
-// ── Append message ────────────────────────────────────────────────────────────
-function kwAppend(role, text, isFallback = false) {
-  const msgs = document.getElementById('kw-messages');
-  const typing = document.getElementById('kw-typing');
-
-  const div = document.createElement('div');
-  div.className = 'kw-msg ' + role;
-
-  const time = new Date().toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' });
-  const formatted = text
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\n/g, '<br>');
-
-  const avatarLabel = role === 'ai' ? 'AI' : 'You';
-  div.innerHTML = `
-    <div class="kw-av-sm">${avatarLabel}</div>
-    <div>
-      <div class="kw-bubble">${formatted}</div>
-      <div class="kw-time">${time}${isFallback ? ' · offline mode' : ''}</div>
-    </div>`;
-
-  msgs.insertBefore(div, typing);
-  msgs.scrollTop = msgs.scrollHeight;
-
-  if (role === 'ai' && !isOpen) {
-    unread++;
-    const badge = document.getElementById('kw-badge');
-    badge.textContent = unread;
-    badge.style.display = 'flex';
-  }
+function showFlags(flags) {
+  if(!flags?.length){showToast('No flags for this contract','a');return;}
+  alert('Fraud flags detected:\n\n'+flags.map((f,i)=>`${i+1}. ${f}`).join('\n'));
 }
 
-// ── Typing indicator ──────────────────────────────────────────────────────────
-function kwShowTyping(show) {
-  const typing = document.getElementById('kw-typing');
-  const msgs = document.getElementById('kw-messages');
-  typing.classList.toggle('show', show);
-  if (show) msgs.scrollTop = msgs.scrollHeight;
+// ── GHOST PROJECTS ────────────────────────────────────────────────────────────
+async function loadGhost() {
+  const grid=document.getElementById('ghost-grid');
+  try {
+    const [{data,total},statsRes]=await Promise.all([api('/api/ghost-projects'),api('/api/ghost-projects/meta/stats')]);
+    const stats=statsRes.data||{};
+    const active=(parseInt(stats.ghost_count)||0)+(parseInt(stats.partial_count)||0);
+    document.getElementById('ghost-tag').textContent=active+' ACTIVE FLAGS';
+    if(!data?.length){grid.innerHTML='<div style="color:var(--t3);font-size:13px">No ghost projects.</div>';return;}
+    grid.innerHTML=data.map(p=>{
+      const s=p.detection_status;
+      const [bc,bl2,tc]=s==='ghost'?['#1a0800','#ff4444','var(--red)']:s==='partial'?['#1a1200','#ffb300','var(--amber)']:['#001a0a','#00e676','var(--green)'];
+      const sat=s==='ghost'?'Empty land detected':s==='partial'?'Partial build visible':'Structure confirmed';
+      return `<div class="gpc">
+        <div class="gpi" style="background:${bc}">
+          <svg width="100%" height="110" viewBox="0 0 300 110"><rect width="300" height="110" fill="${bc}"/><rect x="30" y="18" width="240" height="74" rx="4" fill="none" stroke="${bl2}" stroke-width="0.8" stroke-dasharray="5"/><text x="150" y="50" text-anchor="middle" fill="${bl2}" font-size="11" font-family="Space Mono">SATELLITE VIEW</text><text x="150" y="68" text-anchor="middle" fill="#555" font-size="10" font-family="Space Mono">${sat}</text></svg>
+          <div style="position:absolute;top:8px;right:8px"><span class="badge ${s==='ghost'?'bh':s==='partial'?'bm':'bl'}">${s.toUpperCase()}</span></div>
+          ${p.confidence_score?`<div style="position:absolute;top:8px;left:8px;font-family:var(--mono);font-size:9px;color:${tc}">CONF: ${p.confidence_score}%</div>`:''}
+        </div>
+        <div class="gpb">
+          <div class="gpn">${p.project_name}</div>
+          <div class="gpm">${p.contract_ref||'N/A'} · ${p.county||'KENYA'} · ${p.sector||''}</div>
+          <div class="gpcmp">
+            <div class="gpcol"><div class="gpll">Claimed</div><div style="font-size:11px">${p.claimed_status?.slice(0,40)||'—'}</div></div>
+            <div class="gpcol"><div class="gpll">Satellite</div><div style="font-size:11px;color:${tc}">${p.satellite_status?.slice(0,40)||'—'}</div></div>
+          </div>
+          <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center">
+            <span style="font-family:var(--mono);font-size:10px;color:${tc}">KES ${parseInt(p.amount_at_risk||0).toLocaleString()}</span>
+            ${s!=='verified'?`<button class="btn btn-r btn-sm">Report to EACC</button>`:`<span class="badge bl">CLEAN</span>`}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e){grid.innerHTML='<div style="color:var(--red);font-size:13px">Failed to load.</div>';}
 }
 
-// ── Clear conversation ────────────────────────────────────────────────────────
-function kwClear() {
-  const msgs = document.getElementById('kw-messages');
-  const typing = document.getElementById('kw-typing');
-  // Remove all messages except typing indicator
-  Array.from(msgs.children).forEach(el => {
-    if (el !== typing) el.remove();
-  });
-  // Add welcome back
-  kwAppend('ai', '**Chat cleared.** How can I help you?');
-
-  // Clear server-side history
-  fetch(API_BASE + '/api/chatbot/history/' + SESSION_ID, { method: 'DELETE' }).catch(() => {});
+// ── REPORTS ───────────────────────────────────────────────────────────────────
+async function loadReports() {
+  const feed=document.getElementById('rfeed');
+  try {
+    const {data,success}=await api('/api/reports?limit=5');
+    if(!success||!data?.length){feed.innerHTML='<div style="font-size:13px;color:var(--t3)">No reports yet.</div>';return;}
+    feed.innerHTML=data.map(r=>{
+      const bc=r.status==='resolved'?'bl':r.status==='pending'?'bm':r.status==='escalated'?'bh':'bb';
+      return `<div class="feed-item"><div><span class="badge ${bc}">${(r.type||'REPORT').slice(0,14).toUpperCase()}</span></div><div><div class="ft">${r.county||'Kenya'} · ${r.sector||'Gov'}</div><div class="fm">${r.case_number} · ${r.status.toUpperCase()} · Score: ${r.ai_credibility_score}</div></div></div>`;
+    }).join('');
+  } catch{feed.innerHTML='<div style="font-size:13px;color:var(--t3)">Could not load.</div>';}
 }
 
-// ── Client-side fallback (if backend is down) ─────────────────────────────────
-function kwClientFallback(msg) {
-  const m = msg.toLowerCase();
-  if (m.includes('report') || m.includes('bribe') || m.includes('corruption')) {
-    return '📋 To report corruption:\n\nUse the **Report** section in the app, or call **EACC: 0800 720 880** (free, 24/7).\n\nYour identity is fully protected.';
-  }
-  if (m.includes('contract') || m.includes('procurement')) {
-    return 'Go to **📋 Procurement** in the menu to scan and view government contracts with AI risk scores.';
-  }
-  if (m.includes('ghost') || m.includes('satellite')) {
-    return 'Check **👻 Ghost Projects** to see satellite-verified infrastructure detections across Kenya.';
-  }
-  return '⚠️ I\'m having trouble connecting to the server. Please check your internet connection or try again.\n\n**EACC Hotline: 0800 720 880**';
+// ── SUBMIT REPORT ─────────────────────────────────────────────────────────────
+async function submitReport() {
+  const type=document.getElementById('rt').value;
+  const desc=document.getElementById('rd').value.trim();
+  const fb=document.getElementById('subfb');
+  if(!type||!desc){showFb(fb,'Please fill in type and description.','r');return;}
+  const btn=document.getElementById('subbtn');
+  btn.disabled=true;btn.innerHTML='<span class="spi"></span> Submitting...';
+  try {
+    const {data,success,error}=await api('/api/reports',{method:'POST',body:JSON.stringify({
+      type,county:document.getElementById('rco').value,sector:document.getElementById('rse').value,
+      description:desc,amount:document.getElementById('ra').value||null,
+      anonymous:document.getElementById('ranon').checked
+    })});
+    if(success){
+      showFb(fb,`✅ Submitted. Case: <strong style="color:var(--green)">${data.case_number}</strong> · Credibility: ${data.ai_credibility_score}/100 · Routed to ${data.routing}`,'g');
+      document.getElementById('rd').value='';
+      loadReports();
+    } else showFb(fb,'❌ '+error,'r');
+  } catch{showFb(fb,'❌ Network error. Try again.','r');}
+  btn.disabled=false;btn.innerHTML='Submit Report Securely';
 }
 
-// ── Show badge on load after 3 seconds ────────────────────────────────────────
-setTimeout(() => {
-  if (!isOpen) {
-    unread = 1;
-    const badge = document.getElementById('kw-badge');
-    badge.textContent = '1';
-    badge.style.display = 'flex';
+// ── SCAN CONTRACT ─────────────────────────────────────────────────────────────
+async function runScan() {
+  const id=document.getElementById('m-id').value.trim();
+  const sup=document.getElementById('m-sup').value.trim();
+  const val=document.getElementById('m-val').value;
+  const fb=document.getElementById('scan-fb');
+  if(!id||!sup||!val){showFb(fb,'Fill Contract ID, Supplier and Value.','r');return;}
+  const btn=document.getElementById('scan-btn');
+  btn.disabled=true;btn.innerHTML='<span class="spi"></span> Analysing...';
+  try {
+    const {data,success,error}=await api('/api/contracts/scan',{method:'POST',body:JSON.stringify({
+      contract_id:id,supplier:sup,description:document.getElementById('m-desc').value||'N/A',
+      county:document.getElementById('m-co').value,sector:document.getElementById('m-sec').value,
+      value:parseInt(val),bid_type:document.getElementById('m-bid').value,
+      supplier_reg_date:document.getElementById('m-reg').value||null,
+      awarded_date:document.getElementById('m-awd').value||null,
+    })});
+    if(success){
+      const cls=data.risk_level==='HIGH'?'bh':data.risk_level==='MEDIUM'?'bm':'bl';
+      const flags=Array.isArray(data.flags)?data.flags:[];
+      showFb(fb,`<div style="margin-bottom:10px"><span class="badge ${cls}">AI SCORE: ${data.risk_score} / ${data.risk_level}</span></div>${flags.map(f=>`<div style="font-size:12px;padding:2px 0">• ${f}</div>`).join('')||'<div style="color:var(--green);font-size:12px">No flags.</div>'}`,'g');
+      loadContracts();
+    } else showFb(fb,'❌ '+error,'r');
+  } catch{showFb(fb,'❌ Network error.','r');}
+  btn.disabled=false;btn.innerHTML='Run AI Scan';
+}
+
+// ── AI CHAT ───────────────────────────────────────────────────────────────────
+const AID='ai_'+Math.random().toString(36).slice(2);
+async function sendAI(){
+  const inp=document.getElementById('ai-inp');
+  const txt=inp.value.trim();if(!txt)return;inp.value='';
+  appendAI('u',txt);
+  document.getElementById('ai-typing').style.display='flex';
+  const msgs=document.getElementById('ai-msgs');msgs.scrollTop=msgs.scrollHeight;
+  try{
+    const{reply,success}=await api('/api/ai/chat',{method:'POST',body:JSON.stringify({message:txt,session_id:AID})});
+    document.getElementById('ai-typing').style.display='none';
+    appendAI('a',(success?reply:'Error connecting to AI.').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>'));
+  }catch{
+    document.getElementById('ai-typing').style.display='none';
+    appendAI('a','Connection error. Check backend URL.');
   }
-}, 3000);
+  msgs.scrollTop=msgs.scrollHeight;
+}
+function appendAI(role,text){
+  const msgs=document.getElementById('ai-msgs'),ty=document.getElementById('ai-typing');
+  const d=document.createElement('div');d.className='cmsg '+role;
+  if(role==='a')d.innerHTML=`<div class="cav">AI</div><div><div class="cbub">${text}</div></div>`;
+  else{d.style.cssText='display:flex;justify-content:flex-end';d.innerHTML=`<div><div class="cbub" style="background:var(--green);color:#000;font-weight:500;border-radius:13px 13px 3px 13px;padding:11px 15px;font-size:13px;max-width:82%">${text}</div></div>`;}
+  msgs.insertBefore(d,ty.parentNode===msgs?ty:null);msgs.scrollTop=msgs.scrollHeight;
+}
+function qAI(q){document.getElementById('ai-inp').value=q;sendAI();}
+
+// ── CHATBOT WIDGET ────────────────────────────────────────────────────────────
+const KWS='kw_'+Math.random().toString(36).slice(2);
+let kwOpen=false,kwBusy=false,kwUnread=0;
+function kwToggle(){
+  kwOpen=!kwOpen;document.getElementById('kw-win').classList.toggle('open',kwOpen);
+  if(kwOpen){kwUnread=0;document.getElementById('kw-badge').style.display='none';setTimeout(()=>document.getElementById('kw-inp').focus(),300);}
+}
+async function kwSend(){
+  const inp=document.getElementById('kw-inp');const txt=inp.value.trim();
+  if(!txt||kwBusy)return;inp.value='';inp.style.height='36px';
+  kwAdd('u',txt);kwTyping(true);kwBusy=true;document.getElementById('kw-send').disabled=true;
+  try{
+    const r=await fetch(API+'/api/chatbot/message',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:txt,session_id:KWS})});
+    const d=await r.json();kwTyping(false);
+    kwAdd('a',d.success?d.reply:'Sorry, something went wrong.',d.fallback);
+  }catch{kwTyping(false);kwAdd('a',kwFb(txt),true);}
+  kwBusy=false;document.getElementById('kw-send').disabled=false;document.getElementById('kw-inp').focus();
+}
+function kwQ(t){document.getElementById('kw-inp').value=t;kwSend();if(!kwOpen)kwToggle();}
+function kwClear(){
+  const m=document.getElementById('kw-msgs'),ty=document.getElementById('kw-typing');
+  Array.from(m.children).forEach(el=>{if(el!==ty)el.remove();});
+  kwAdd('a','**Chat cleared.** How can I help?');
+  fetch(API+'/api/chatbot/history/'+KWS,{method:'DELETE'}).catch(()=>{});
+}
+function kwAdd(role,text,fb=false){
+  const m=document.getElementById('kw-msgs'),ty=document.getElementById('kw-typing');
+  const d=document.createElement('div');d.className='kwm '+role;
+  const t=new Date().toLocaleTimeString('en-KE',{hour:'2-digit',minute:'2-digit'});
+  const f=text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+  d.innerHTML=`<div class="kwsm">${role==='a'?'AI':'You'}</div><div><div class="kwb">${f}</div><div class="kwt">${t}${fb?' · offline':''}</div></div>`;
+  m.insertBefore(d,ty);m.scrollTop=m.scrollHeight;
+  if(role==='a'&&!kwOpen){kwUnread++;const b=document.getElementById('kw-badge');b.textContent=kwUnread;b.style.display='flex';}
+}
+function kwTyping(s){const ty=document.getElementById('kw-typing'),m=document.getElementById('kw-msgs');ty.classList.toggle('show',s);if(s)m.scrollTop=m.scrollHeight;}
+function kwFb(msg){
+  const m=(msg||'').toLowerCase();
+  if(m.includes('report')||m.includes('bribe'))return '📋 Use **🚨 Report** in the menu, or call **EACC: 0800 720 880** (free, 24/7).';
+  if(m.includes('contract')||m.includes('tender'))return 'Go to **📋 Procurement** → **+ Scan Contract** to analyse any tender with AI.';
+  if(m.includes('ghost')||m.includes('satellite'))return 'Check **👻 Ghost Projects** for satellite-verified detections across Kenya.';
+  return '⚠️ Connection issue. Try again or call **EACC: 0800 720 880**';
+}
+setTimeout(()=>{if(!kwOpen){kwUnread=1;const b=document.getElementById('kw-badge');b.textContent='1';b.style.display='flex';}},4000);
+
+// ── MODAL ─────────────────────────────────────────────────────────────────────
+function openM(id){document.getElementById(id).classList.add('show');}
+function closeM(id){document.getElementById(id).classList.remove('show');document.getElementById('scan-fb').className='fb';}
+document.querySelectorAll('.mo').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('show');}));
+
+// ── FEEDBACK ──────────────────────────────────────────────────────────────────
+function showFb(el,msg,type){el.className='fb show '+(type==='g'?'fbg':'fbr');el.innerHTML=msg;}
+function showToast(msg,type='g'){
+  const d=document.createElement('div');
+  d.style.cssText=`position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--card2);border:1px solid var(--border2);padding:10px 18px;border-radius:8px;font-size:13px;z-index:9997;animation:fi .3s ease;color:${type==='g'?'var(--green)':type==='r'?'var(--red)':'var(--amber)'}`;
+  d.textContent=msg;document.body.appendChild(d);setTimeout(()=>d.remove(),3000);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+loadDashboard();
 </script>
-</body>
-</html>
 </body>
 </html>
