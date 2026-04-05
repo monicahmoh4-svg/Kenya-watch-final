@@ -752,5 +752,396 @@ loadStats();
 </script>
 
 <!-- ═══ END CHATBOT WIDGET ═══ -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KenyaWatch AI — Chatbot Test</title>
+<style>
+/* ── Reset & base ── */
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0e0f;color:#e8f0f2;min-height:100vh;display:flex;align-items:center;justify-content:center}
+
+/* ── Chat bubble (trigger) ── */
+#kw-trigger{
+  position:fixed;bottom:24px;right:24px;width:60px;height:60px;
+  background:#00c853;border-radius:50%;border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 20px rgba(0,200,83,.4);z-index:9999;
+  transition:transform .2s,box-shadow .2s;
+}
+#kw-trigger:hover{transform:scale(1.08);box-shadow:0 6px 28px rgba(0,200,83,.55)}
+#kw-trigger svg{width:28px;height:28px;fill:#000}
+#kw-badge{
+  position:absolute;top:-4px;right:-4px;background:#ff4444;color:#fff;
+  border-radius:50%;width:18px;height:18px;font-size:10px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;display:none;
+}
+
+/* ── Chat window ── */
+#kw-window{
+  position:fixed;bottom:96px;right:24px;width:380px;height:560px;
+  background:#111618;border:1px solid #1f2a2d;border-radius:16px;
+  display:flex;flex-direction:column;z-index:9999;
+  transform:scale(.9) translateY(20px);opacity:0;pointer-events:none;
+  transition:transform .25s cubic-bezier(.34,1.56,.64,1),opacity .2s;
+  box-shadow:0 20px 60px rgba(0,0,0,.6);
+}
+#kw-window.open{transform:scale(1) translateY(0);opacity:1;pointer-events:all}
+
+/* ── Header ── */
+#kw-header{
+  background:#0d4a27;border-radius:16px 16px 0 0;padding:14px 16px;
+  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid #1a3a20;flex-shrink:0;
+}
+.kw-h-left{display:flex;align-items:center;gap:10px}
+.kw-avatar{
+  width:38px;height:38px;background:#00c853;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-weight:800;
+  font-size:14px;color:#000;flex-shrink:0;position:relative;
+}
+.kw-online{
+  position:absolute;bottom:1px;right:1px;width:10px;height:10px;
+  background:#00e676;border-radius:50%;border:2px solid #0d4a27;
+}
+.kw-title{font-weight:700;font-size:14px;color:#fff}
+.kw-sub{font-size:11px;color:#9fe1cb}
+.kw-actions{display:flex;gap:6px}
+.kw-btn{
+  background:rgba(0,0,0,.3);border:none;color:#9fe1cb;width:30px;height:30px;
+  border-radius:8px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;
+  transition:background .15s;
+}
+.kw-btn:hover{background:rgba(0,0,0,.5);color:#fff}
+
+/* ── Quick replies ── */
+#kw-quick{
+  display:flex;gap:6px;padding:10px 12px;overflow-x:auto;flex-shrink:0;
+  border-bottom:1px solid #1f2a2d;scrollbar-width:none;
+}
+#kw-quick::-webkit-scrollbar{display:none}
+.kw-qr{
+  white-space:nowrap;background:#0d4a27;border:1px solid #1b6b3a;
+  color:#9fe1cb;font-size:11px;padding:5px 10px;border-radius:20px;
+  cursor:pointer;transition:background .15s;flex-shrink:0;
+}
+.kw-qr:hover{background:#1b6b3a;color:#fff}
+
+/* ── Messages ── */
+#kw-messages{
+  flex:1;overflow-y:auto;padding:14px 12px;display:flex;flex-direction:column;gap:10px;
+  scrollbar-width:thin;scrollbar-color:#1f2a2d transparent;
+}
+#kw-messages::-webkit-scrollbar{width:4px}
+#kw-messages::-webkit-scrollbar-thumb{background:#1f2a2d;border-radius:2px}
+
+.kw-msg{display:flex;gap:8px;animation:kw-fade .25s ease}
+@keyframes kw-fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.kw-msg.user{flex-direction:row-reverse}
+
+.kw-bubble{
+  max-width:78%;padding:10px 13px;border-radius:14px;font-size:13px;line-height:1.55;
+}
+.kw-msg.ai .kw-bubble{
+  background:#141a1c;border:1px solid #1f2a2d;
+  border-bottom-left-radius:4px;color:#e8f0f2;
+}
+.kw-msg.ai .kw-bubble strong{color:#00c853}
+.kw-msg.user .kw-bubble{
+  background:#00c853;color:#000;font-weight:500;
+  border-bottom-right-radius:4px;
+}
+.kw-av-sm{
+  width:28px;height:28px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;margin-top:2px;
+}
+.kw-msg.ai .kw-av-sm{background:#0d4a27;color:#00c853}
+.kw-msg.user .kw-av-sm{background:#005c2a;color:#00c853}
+
+.kw-time{font-size:10px;color:#4a6570;margin-top:2px;text-align:right}
+.kw-msg.ai .kw-time{text-align:left}
+
+/* ── Typing indicator ── */
+#kw-typing{display:none;align-items:center;gap:8px;padding:2px 0}
+#kw-typing.show{display:flex}
+.kw-dot{
+  width:7px;height:7px;background:#00c853;border-radius:50%;
+  animation:kw-bounce 1.2s infinite;
+}
+.kw-dot:nth-child(2){animation-delay:.2s}
+.kw-dot:nth-child(3){animation-delay:.4s}
+@keyframes kw-bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+
+/* ── Input area ── */
+#kw-footer{
+  padding:10px 12px;border-top:1px solid #1f2a2d;
+  display:flex;gap:8px;flex-shrink:0;
+}
+#kw-input{
+  flex:1;background:#0a0e0f;border:1px solid #1f2a2d;border-radius:10px;
+  color:#e8f0f2;font-size:13px;padding:9px 13px;outline:none;
+  transition:border-color .2s;resize:none;height:38px;font-family:inherit;
+}
+#kw-input:focus{border-color:#00c853}
+#kw-input::placeholder{color:#4a6570}
+#kw-send{
+  width:38px;height:38px;background:#00c853;border:none;border-radius:10px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:background .2s,transform .15s;flex-shrink:0;
+}
+#kw-send:hover{background:#00e676;transform:scale(1.05)}
+#kw-send:disabled{background:#1f2a2d;cursor:not-allowed;transform:none}
+#kw-send svg{width:16px;height:16px;fill:#000}
+
+/* ── Powered by ── */
+#kw-powered{
+  text-align:center;padding:6px;font-size:10px;color:#4a6570;
+  border-top:1px solid #1a1f20;flex-shrink:0;
+}
+
+/* ── Mobile ── */
+@media(max-width:440px){
+  #kw-window{width:calc(100vw - 16px);right:8px;bottom:84px;height:75vh}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     CHATBOT WIDGET — copy everything below
+     the <body> tag into your index.html
+════════════════════════════════════════════ -->
+
+<!-- Trigger bubble -->
+<button id="kw-trigger" onclick="kwToggle()" aria-label="Open KenyaWatch AI chat">
+  <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>
+  <span id="kw-badge">1</span>
+</button>
+
+<!-- Chat window -->
+<div id="kw-window">
+  <!-- Header -->
+  <div id="kw-header">
+    <div class="kw-h-left">
+      <div class="kw-avatar">AI<div class="kw-online"></div></div>
+      <div>
+        <div class="kw-title">KenyaWatch AI</div>
+        <div class="kw-sub">Anti-Corruption Assistant</div>
+      </div>
+    </div>
+    <div class="kw-actions">
+      <button class="kw-btn" onclick="kwClear()" title="Clear chat">&#x1F5D1;</button>
+      <button class="kw-btn" onclick="kwToggle()" title="Close">&#x2715;</button>
+    </div>
+  </div>
+
+  <!-- Quick replies -->
+  <div id="kw-quick">
+    <button class="kw-qr" onclick="kwQuick('How do I report corruption?')">Report corruption</button>
+    <button class="kw-qr" onclick="kwQuick('Show me high-risk contracts')">High-risk contracts</button>
+    <button class="kw-qr" onclick="kwQuick('What are ghost projects?')">Ghost projects</button>
+    <button class="kw-qr" onclick="kwQuick('How does the AI scoring work?')">AI scoring</button>
+    <button class="kw-qr" onclick="kwQuick('EACC contact details')">EACC contacts</button>
+    <button class="kw-qr" onclick="kwQuick('Which counties have the highest corruption risk?')">County risk</button>
+  </div>
+
+  <!-- Messages -->
+  <div id="kw-messages">
+    <div class="kw-msg ai">
+      <div class="kw-av-sm">AI</div>
+      <div>
+        <div class="kw-bubble">
+          <strong>Habari! I'm KenyaWatch AI</strong> 👋<br><br>
+          I'm your anti-corruption intelligence assistant for Kenya.<br><br>
+          I can help you:<br>
+          • Report corruption anonymously<br>
+          • Analyse government contracts<br>
+          • Track ghost projects<br>
+          • Connect you to EACC, DPP, PPRA<br><br>
+          What would you like to do?
+        </div>
+        <div class="kw-time">Now</div>
+      </div>
+    </div>
+    <div id="kw-typing" class="kw-msg ai">
+      <div class="kw-av-sm">AI</div>
+      <div class="kw-bubble" style="padding:12px 16px">
+        <div style="display:flex;gap:5px;align-items:center">
+          <div class="kw-dot"></div>
+          <div class="kw-dot"></div>
+          <div class="kw-dot"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Input -->
+  <div id="kw-footer">
+    <textarea id="kw-input" placeholder="Ask about contracts, corruption, or reporting..." rows="1"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();kwSend()}"
+      oninput="this.style.height='38px';this.style.height=Math.min(this.scrollHeight,100)+'px'"></textarea>
+    <button id="kw-send" onclick="kwSend()">
+      <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+    </button>
+  </div>
+
+  <div id="kw-powered">Powered by Claude AI &nbsp;·&nbsp; KenyaWatch v2.0</div>
+</div>
+
+<script>
+// ── Configuration ─────────────────────────────────────────────────────────────
+// Uses window.KENYAWATCH_API if set, otherwise falls back to same origin
+const API_BASE = (window.KENYAWATCH_API || window.location.origin);
+const CHATBOT_URL = API_BASE + '/api/chatbot/message';
+
+// ── Session ───────────────────────────────────────────────────────────────────
+const SESSION_ID = 'kw_' + Math.random().toString(36).slice(2, 10);
+let isOpen = false;
+let isThinking = false;
+let unread = 0;
+
+// ── Toggle ────────────────────────────────────────────────────────────────────
+function kwToggle() {
+  isOpen = !isOpen;
+  const win = document.getElementById('kw-window');
+  win.classList.toggle('open', isOpen);
+  if (isOpen) {
+    unread = 0;
+    document.getElementById('kw-badge').style.display = 'none';
+    setTimeout(() => document.getElementById('kw-input').focus(), 300);
+  }
+}
+
+// ── Send message ──────────────────────────────────────────────────────────────
+async function kwSend() {
+  const input = document.getElementById('kw-input');
+  const text = input.value.trim();
+  if (!text || isThinking) return;
+
+  input.value = '';
+  input.style.height = '38px';
+  kwAppend('user', text);
+  kwShowTyping(true);
+  isThinking = true;
+  document.getElementById('kw-send').disabled = true;
+
+  try {
+    const res = await fetch(CHATBOT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: text, session_id: SESSION_ID }),
+    });
+
+    const data = await res.json();
+    kwShowTyping(false);
+
+    if (data.success) {
+      kwAppend('ai', data.reply, data.fallback);
+    } else {
+      kwAppend('ai', 'Sorry, something went wrong. Please try again.');
+    }
+  } catch (err) {
+    kwShowTyping(false);
+    // Use client-side fallback if network fails
+    kwAppend('ai', kwClientFallback(text));
+  }
+
+  isThinking = false;
+  document.getElementById('kw-send').disabled = false;
+  document.getElementById('kw-input').focus();
+}
+
+// ── Quick reply ───────────────────────────────────────────────────────────────
+function kwQuick(text) {
+  document.getElementById('kw-input').value = text;
+  kwSend();
+  if (!isOpen) kwToggle();
+}
+
+// ── Append message ────────────────────────────────────────────────────────────
+function kwAppend(role, text, isFallback = false) {
+  const msgs = document.getElementById('kw-messages');
+  const typing = document.getElementById('kw-typing');
+
+  const div = document.createElement('div');
+  div.className = 'kw-msg ' + role;
+
+  const time = new Date().toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' });
+  const formatted = text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>');
+
+  const avatarLabel = role === 'ai' ? 'AI' : 'You';
+  div.innerHTML = `
+    <div class="kw-av-sm">${avatarLabel}</div>
+    <div>
+      <div class="kw-bubble">${formatted}</div>
+      <div class="kw-time">${time}${isFallback ? ' · offline mode' : ''}</div>
+    </div>`;
+
+  msgs.insertBefore(div, typing);
+  msgs.scrollTop = msgs.scrollHeight;
+
+  if (role === 'ai' && !isOpen) {
+    unread++;
+    const badge = document.getElementById('kw-badge');
+    badge.textContent = unread;
+    badge.style.display = 'flex';
+  }
+}
+
+// ── Typing indicator ──────────────────────────────────────────────────────────
+function kwShowTyping(show) {
+  const typing = document.getElementById('kw-typing');
+  const msgs = document.getElementById('kw-messages');
+  typing.classList.toggle('show', show);
+  if (show) msgs.scrollTop = msgs.scrollHeight;
+}
+
+// ── Clear conversation ────────────────────────────────────────────────────────
+function kwClear() {
+  const msgs = document.getElementById('kw-messages');
+  const typing = document.getElementById('kw-typing');
+  // Remove all messages except typing indicator
+  Array.from(msgs.children).forEach(el => {
+    if (el !== typing) el.remove();
+  });
+  // Add welcome back
+  kwAppend('ai', '**Chat cleared.** How can I help you?');
+
+  // Clear server-side history
+  fetch(API_BASE + '/api/chatbot/history/' + SESSION_ID, { method: 'DELETE' }).catch(() => {});
+}
+
+// ── Client-side fallback (if backend is down) ─────────────────────────────────
+function kwClientFallback(msg) {
+  const m = msg.toLowerCase();
+  if (m.includes('report') || m.includes('bribe') || m.includes('corruption')) {
+    return '📋 To report corruption:\n\nUse the **Report** section in the app, or call **EACC: 0800 720 880** (free, 24/7).\n\nYour identity is fully protected.';
+  }
+  if (m.includes('contract') || m.includes('procurement')) {
+    return 'Go to **📋 Procurement** in the menu to scan and view government contracts with AI risk scores.';
+  }
+  if (m.includes('ghost') || m.includes('satellite')) {
+    return 'Check **👻 Ghost Projects** to see satellite-verified infrastructure detections across Kenya.';
+  }
+  return '⚠️ I\'m having trouble connecting to the server. Please check your internet connection or try again.\n\n**EACC Hotline: 0800 720 880**';
+}
+
+// ── Show badge on load after 3 seconds ────────────────────────────────────────
+setTimeout(() => {
+  if (!isOpen) {
+    unread = 1;
+    const badge = document.getElementById('kw-badge');
+    badge.textContent = '1';
+    badge.style.display = 'flex';
+  }
+}, 3000);
+</script>
+</body>
+</html>
 </body>
 </html>
