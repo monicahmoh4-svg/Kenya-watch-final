@@ -1,13 +1,13 @@
 {
   "name": "kenyawatch-backend",
-  "version": "1.0.0",
-  "main": "backend/server.js",
+  "version": "2.0.0",
+  "description": "KenyaWatch AI — Production Backend",
+  "main": "Backend/server.js",
   "scripts": {
-    "start": "node backend/server.js"
+    "start": "node Backend/server.js",
+    "dev": "nodemon Backend/server.js"
   },
-  "engines": {
-    "node": ">=18.0.0"
-  },
+  "engines": { "node": ">=18.0.0" },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.20.1",
     "cors": "^2.8.5",
