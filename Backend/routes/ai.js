@@ -5,7 +5,9 @@ const { safeJSON } = require('../utils/helpers');
 
 let anthropic;
 try {
-  const Anthropic = require('@anthropic-ai/sdk');
+  const client = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY || ''
+});
   anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 } catch (e) {
   console.warn('Anthropic SDK not initialised — AI chat will return fallback responses');
@@ -165,3 +167,14 @@ router.get('/history/:session_id', async (req, res, next) => {
 });
 
 module.exports = router;
+} catch (e) {
+  console.error('AI chat error:', e.message);
+  
+  // Check if it's an API key error
+  if (e.message.includes('authentication') || e.message.includes('apiKey')) {
+    return errorResponse(res, 503, 'AI service not configured — ANTHROPIC_API_KEY missing', 'AI_NOT_CONFIGURED');
+  }
+  
+  const fallback = generateFallbackResponse(message);
+  res.json({ success: true, reply: fallback, fallback: true });
+}
