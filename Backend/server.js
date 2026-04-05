@@ -9,6 +9,13 @@ const { initDB, pool } = require('./db');
 const { logger, errorHandler, notFound } = require('./middleware');
 
 const app  = express();
+// Trust Railway proxy
+app.set('trust proxy', 1);
+
+// Validate required environment variables
+if (!process.env.ANTHROPIC_API_KEY) {
+  console.warn('⚠️  WARNING: ANTHROPIC_API_KEY not set — AI features will be unavailable');
+}
 const PORT = process.env.PORT || 5000;
 
 // ── Security ──────────────────────────────────────────────────────────────────
