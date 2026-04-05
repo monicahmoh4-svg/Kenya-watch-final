@@ -1,11 +1,10 @@
 {
   "name": "kenyawatch-backend",
-  "version": "2.0.0",
-  "description": "KenyaWatch AI — Production Backend",
+  "version": "3.0.0",
+  "description": "KenyaWatch AI — Production Backend v3",
   "main": "Backend/server.js",
   "scripts": {
-    "start": "node Backend/server.js",
-    "dev": "nodemon Backend/server.js"
+    "start": "node Backend/server.js"
   },
   "engines": { "node": ">=18.0.0" },
   "dependencies": {
