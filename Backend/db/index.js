@@ -15,8 +15,13 @@ const initDB = async () => {
       console.log('✅ PostgreSQL connected');
       await createTables(client);
       await runMigrations(client);
-      const { rowCount } = await client.query('SELECT 1 FROM contracts LIMIT 1');
-      if (!rowCount) await seedAll(client);
+      const { rows } = await client.query('SELECT COUNT(*) as count FROM contracts');
+      const count = parseInt(rows[0].count);
+      if (count === 0) {
+        await seedAll(client);
+      } else {
+        console.log('✅ Data already present — skipping seed');
+      }
       client.release();
       return;
     } catch (err) {

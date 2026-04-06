@@ -9,6 +9,9 @@ const { initDB, pool } = require('./db');
 const app  = express();
 const PORT = process.env.PORT || 5000;
 
+// Trust Railway proxy for rate limiting
+app.set('trust proxy', 1);
+
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors({ origin:'*', methods:['GET','POST','PUT','PATCH','DELETE','OPTIONS'], allowedHeaders:['Content-Type','Authorization'] }));
 app.options('*', cors());
