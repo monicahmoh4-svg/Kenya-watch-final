@@ -583,7 +583,6 @@ async function api(path,opts={}) {
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
 async function loadDashboard() {
-  // Use allSettled so one failing endpoint never breaks the whole dashboard
   const [statsRes, analyticsRes, ghostRes, reportsRes, feedRes, healthRes] = await Promise.allSettled([
     api('/api/stats'),
     api('/api/contracts/analytics'),
@@ -596,7 +595,6 @@ async function loadDashboard() {
   const ok = r => r.status === 'fulfilled' && r.value;
   const val = r => ok(r) ? r.value : {};
 
-  // ── Stats bar ────────────────────────────────────────────────────────────
   try {
     const d = val(statsRes).data || {};
     const fmt = n => n >= 1e9 ? (n/1e9).toFixed(1)+'B' : n >= 1e6 ? (n/1e6).toFixed(0)+'M' : (n||0).toString();
@@ -606,12 +604,10 @@ async function loadDashboard() {
     document.getElementById('s4').textContent = fmt(d.funds_at_risk || 0);
     document.getElementById('flag-c').textContent = (d.contracts_flagged||0) + ' FLAGS';
     document.getElementById('du').textContent = 'Updated ' + new Date().toLocaleTimeString('en-KE',{hour12:false});
-  } catch(e) { console.warn('Stats error:', e.message); }
+  } catch(e) { console.warn('Stats:', e.message); }
 
-  // ── County bars ──────────────────────────────────────────────────────────
   try {
-    const cData = val(analyticsRes).data || {};
-    const counties = (cData.county_breakdown || []).slice(0, 8);
+    const counties = (val(analyticsRes).data?.county_breakdown || []).slice(0, 8);
     if (counties.length) {
       const max = Math.max(...counties.map(c => c.avg_risk||0)) || 100;
       document.getElementById('county-bars').innerHTML = counties.map(c => {
@@ -619,17 +615,12 @@ async function loadDashboard() {
         return `<div class="ci"><div class="cn">${c.county}</div><div class="bw"><div class="bar ${cls}" style="width:${(c.avg_risk/max)*100}%"></div></div><div class="cv">${c.avg_risk}</div></div>`;
       }).join('');
     } else {
-      document.getElementById('county-bars').innerHTML = '<div style="color:var(--t3);font-size:12px">No county data yet — contracts will populate this.</div>';
+      document.getElementById('county-bars').innerHTML = '<div style="color:var(--t3);font-size:12px">Scan contracts to populate county data.</div>';
     }
-  } catch(e) {
-    document.getElementById('county-bars').innerHTML = '<div style="color:var(--t3);font-size:12px">Loading county data...</div>';
-    console.warn('County bars error:', e.message);
-  }
+  } catch(e) { document.getElementById('county-bars').innerHTML = '<div style="color:var(--t3);font-size:12px">Loading...</div>'; }
 
-  // ── Risk distribution ────────────────────────────────────────────────────
   try {
-    const cData = val(analyticsRes).data || {};
-    const rd = cData.risk_distribution || [];
+    const rd = val(analyticsRes).data?.risk_distribution || [];
     if (rd.length) {
       const total = rd.reduce((s,r) => s + parseInt(r.count), 0) || 1;
       document.getElementById('risk-dist').innerHTML = rd.map(r => {
@@ -638,17 +629,12 @@ async function loadDashboard() {
         return `<div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:13px"><span style="color:${tc}">● ${r.risk_level}</span><span style="font-family:var(--mono);font-size:11px">${r.count} (${Math.round(r.count/total*100)}%)</span></div><div class="pbar"><div class="pfill ${cls}" style="width:${r.count/total*100}%"></div></div></div>`;
       }).join('');
     } else {
-      document.getElementById('risk-dist').innerHTML = '<div style="color:var(--t3);font-size:12px">Scan contracts to populate risk data.</div>';
+      document.getElementById('risk-dist').innerHTML = '<div style="color:var(--t3);font-size:12px">No risk data yet.</div>';
     }
-  } catch(e) {
-    document.getElementById('risk-dist').innerHTML = '<div style="color:var(--t3);font-size:12px">Loading...</div>';
-    console.warn('Risk dist error:', e.message);
-  }
+  } catch(e) { document.getElementById('risk-dist').innerHTML = '<div style="color:var(--t3);font-size:12px">Loading...</div>'; }
 
-  // ── Sector breakdown ─────────────────────────────────────────────────────
   try {
-    const cData = val(analyticsRes).data || {};
-    const sd = (cData.sector_breakdown || []).slice(0, 5);
+    const sd = (val(analyticsRes).data?.sector_breakdown || []).slice(0, 5);
     if (sd.length) {
       const max2 = Math.max(...sd.map(s => s.avg_risk||0)) || 100;
       document.getElementById('sector-dist').innerHTML = sd.map(s => {
@@ -658,12 +644,8 @@ async function loadDashboard() {
     } else {
       document.getElementById('sector-dist').innerHTML = '<div style="color:var(--t3);font-size:12px">No sector data yet.</div>';
     }
-  } catch(e) {
-    document.getElementById('sector-dist').innerHTML = '<div style="color:var(--t3);font-size:12px">Loading...</div>';
-    console.warn('Sector dist error:', e.message);
-  }
+  } catch(e) { document.getElementById('sector-dist').innerHTML = '<div style="color:var(--t3);font-size:12px">Loading...</div>'; }
 
-  // ── Live feed ────────────────────────────────────────────────────────────
   try {
     const reports = val(feedRes).data || [];
     if (reports.length) {
@@ -673,30 +655,21 @@ async function loadDashboard() {
         return `<div class="feed-item"><div class="fic ${bg}">${icon}</div><div><div class="ft">${r.type} — ${r.county||'Kenya'}</div><div class="fm">${r.case_number} · ${r.status.toUpperCase()} · Score: ${r.ai_credibility_score}</div></div></div>`;
       }).join('');
     } else {
-      document.getElementById('live-feed').innerHTML = '<div style="color:var(--t3);font-size:12px">No reports yet. Submit one from the Report tab.</div>';
+      document.getElementById('live-feed').innerHTML = '<div style="color:var(--t3);font-size:12px">No reports yet.</div>';
     }
-  } catch(e) {
-    document.getElementById('live-feed').innerHTML = '<div style="color:var(--t3);font-size:12px">Loading activity...</div>';
-    console.warn('Feed error:', e.message);
-  }
+  } catch(e) { document.getElementById('live-feed').innerHTML = '<div style="color:var(--t3);font-size:12px">Loading...</div>'; }
 
-  // ── Health panel ─────────────────────────────────────────────────────────
   try {
     const hRes = val(healthRes);
-    const isOk = hRes.status === 'ok';
     document.getElementById('health-panel').innerHTML = `
       <div style="display:flex;flex-direction:column;gap:8px">
-        <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px"><span>Backend API</span><span class="badge ${isOk?'bl':'bh'}">${isOk?'ONLINE':'DEGRADED'}</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px"><span>Backend API</span><span class="badge ${hRes.status==='ok'?'bl':'bh'}">${hRes.status==='ok'?'ONLINE':'DEGRADED'}</span></div>
         <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px"><span>Database</span><span class="badge ${hRes.database==='connected'?'bl':'bh'}">${(hRes.database||'unknown').toUpperCase()}</span></div>
         <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px"><span>AI Service</span><span class="badge ${hRes.ai==='configured'?'bl':'bm'}">${hRes.ai==='configured'?'READY':'NEEDS KEY'}</span></div>
         <div style="font-family:var(--mono);font-size:10px;color:var(--t3);margin-top:4px">v${hRes.version||'3.0.0'} · ${new Date(hRes.timestamp||Date.now()).toLocaleTimeString('en-KE')}</div>
       </div>`;
-  } catch(e) {
-    document.getElementById('health-panel').innerHTML = '<div style="color:var(--t3);font-size:12px">Checking status...</div>';
-    console.warn('Health error:', e.message);
-  }
+  } catch(e) { document.getElementById('health-panel').innerHTML = '<div style="color:var(--t3);font-size:12px">Checking...</div>'; }
 }
-
 // ── CONTRACTS ─────────────────────────────────────────────────────────────────
 async function loadContracts() {
   const tbody=document.getElementById('ctbl');
