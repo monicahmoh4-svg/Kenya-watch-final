@@ -14,6 +14,7 @@ const initDB = async () => {
       const client = await pool.connect();
       console.log('✅ PostgreSQL connected');
       await createTables(client);
+      await runMigrations(client);
       const { rowCount } = await client.query('SELECT 1 FROM contracts LIMIT 1');
       if (!rowCount) await seedAll(client);
       client.release();
@@ -93,6 +94,28 @@ const createTables = async (client) => {
   console.log('✅ Tables ready');
 };
 
+// Safely add columns that may be missing from old deployments
+const runMigrations = async (client) => {
+  const cols = [
+    ['reports',       'routing',          "VARCHAR(20) DEFAULT 'EACC'"],
+    ['reports',       'sector',           'VARCHAR(100)'],
+    ['reports',       'keywords',         "JSONB DEFAULT '[]'"],
+    ['reports',       'updated_at',       'TIMESTAMPTZ DEFAULT NOW()'],
+    ['ghost_projects','sector',           'VARCHAR(100)'],
+    ['ghost_projects','satellite_metadata',"JSONB DEFAULT '{}'"],
+    ['contracts',     'procuring_entity', 'VARCHAR(250)'],
+    ['contracts',     'updated_at',       'TIMESTAMPTZ DEFAULT NOW()'],
+  ];
+  for (const [tbl, col, def] of cols) {
+    try {
+      await client.query(`ALTER TABLE ${tbl} ADD COLUMN IF NOT EXISTS ${col} ${def}`);
+    } catch (e) {
+      if (!e.message.includes('already exists')) console.warn('Migration warn:', e.message);
+    }
+  }
+  console.log('✅ Migrations done');
+};
+
 const seedAll = async (client) => {
   await client.query(`
     INSERT INTO contracts (contract_id,description,county,sector,value,supplier,supplier_reg_date,bid_type,awarded_date,risk_score,risk_level,flags,procuring_entity) VALUES
@@ -115,61 +138,34 @@ const seedAll = async (client) => {
     ('KE-RDS-2026-0017','Thika Superhighway maintenance year 3','Kiambu','Roads',380000000,'Raubex Kenya','2012-01-01','open','2025-08-01',15,'LOW','["Established contractor","Competitive renewal","Clean"]','Kenya National Highways Authority'),
     ('KE-WAT-2026-0018','Turkana water supply emergency works','Turkana','Water',145000000,'EmerWater Solutions','2023-09-10','emergency','2025-11-05',58,'MEDIUM','["Emergency justified by drought","Price slightly above benchmark"]','Turkana County Water'),
     ('KE-AGR-2026-0019','Strategic grain reserve maize 500000 bags','National','Agriculture',2100000000,'GrainMaster Kenya','2022-01-01','open','2025-06-15',42,'MEDIUM','["Quality dispute raised","Partial delivery confirmed"]','National Cereals Board'),
-    ('KE-ICT-2026-0020','National ID digitisation system upgrade','National','ICT',3500000000,'IBM East Africa','2000-01-01','negotiated','2025-03-01',30,'LOW','["Established vendor","Negotiated proprietary system","Security vetted"]','National Registration Bureau'),
-    ('KE-HTH-2026-0021','Bomet County Hospital renovation','Bomet','Health',95000000,'Highlands Construction','2019-06-01','open','2025-10-20',28,'LOW','["Clean process","County assembly verified"]','Bomet County'),
-    ('KE-RDS-2026-0022','Machakos-Konza Technopolis road 35km','Machakos','Roads',980000000,'H Young Co','2008-07-01','open','2025-09-10',20,'LOW','["Clean Vision 2030 infrastructure","Competitive"]','Kenya National Highways Authority'),
-    ('KE-ICT-2026-0023','Nairobi County smart waste management system','Nairobi','ICT',285000000,'SmartCity Solutions','2024-01-20','restricted','2025-12-20',83,'HIGH','["Company 1 year old","Price 260% above comparable","Director linked to county exec"]','Nairobi City County'),
-    ('KE-WAT-2026-0024','Lake Victoria water intake Kisumu','Kisumu','Water',890000000,'Vitens Evides International','2005-01-01','open','2025-04-15',18,'LOW','["Dutch firm clean","Open international tender","EU funded"]','Lake Victoria South Water'),
-    ('KE-ICT-2026-0025','Kiambu integrated financial management system','Kiambu','ICT',95000000,'FinSystems Ltd','2024-05-10','single_source','2025-11-10',87,'HIGH','["Single-source KES 95M","Company 7 months old","Director is nephew of governor","Resale of open-source software"]','Kiambu County Treasury'),
-    ('KE-RDS-2026-0026','Eldoret bypass ring road phase 1','Uasin Gishu','Roads',1450000000,'Sinohydro Corporation','2005-01-01','open','2025-06-01',22,'LOW','["Chinese contractor clean","Open tender","KfW co-financed"]','Kenya National Highways Authority'),
-    ('KE-AGR-2026-0027','Supply seeds drought-resistant varieties 30 counties','National','Agriculture',420000000,'SeedCo Africa','2003-01-01','open','2025-08-15',25,'LOW','["Established company","Certified seeds","Competitive"]','Kenya Seed Company'),
-    ('KE-HTH-2026-0028','HIV testing kits 2M units national','National','Health',320000000,'DiagnosticsKE','2017-03-01','open','2025-07-05',28,'LOW','["WHO pre-qualified supplier","Open competitive","Clean"]','NACC'),
-    ('KE-EDU-2026-0029','KCSE examination materials supply 2026','National','Education',850000000,'Printtech Kenya','2008-04-01','restricted','2026-01-15',55,'MEDIUM','["Restricted sensitive material — justified","Price query by Auditor General"]','KNEC'),
-    ('KE-ICT-2026-0030','Lamu Port digital customs management','Lamu','ICT',480000000,'PortTech Systems','2023-07-15','restricted','2025-10-25',76,'HIGH','["Price 230% above estimate","Director connected to KRA official","Restricted unusual"]','Kenya Ports Authority'),
-    ('KE-HTH-2026-0031','Mandera County Hospital beds and linen 500 units','Mandera','Health',28000000,'MedFurnish Kenya','2024-08-20','single_source','2025-11-30',82,'HIGH','["Single-source KES 28M","Price 340% above market","Company 6 months old"]','Mandera County'),
-    ('KE-RDS-2026-0032','Northern bypass Nairobi interchange upgrade','Nairobi','Roads',2200000000,'Surbana Jurong','2010-01-01','open','2025-05-10',25,'LOW','["Singaporean consultant","Open tender","ADB funded"]','Kenya Urban Roads Authority'),
-    ('KE-EDU-2026-0033','School furniture 500 secondary schools Nairobi','Nairobi','Education',220000000,'FurniCraft Kenya','2024-06-15','single_source','2025-12-15',89,'HIGH','["Single-source KES 220M","7-month-old company","Director is ward rep","Price 310% above market"]','Nairobi City County Education'),
-    ('KE-WAT-2026-0034','Baringo borehole drilling 500 units','Baringo','Water',375000000,'WellDrill Africa','2016-07-01','open','2025-10-01',30,'LOW','["Community water access","Clean","World Bank co-funded"]','Baringo County'),
-    ('KE-AGR-2026-0035','Meru Tea Factory upgrade modernisation','Meru','Agriculture',145000000,'Tecalemit Kenya','2012-05-01','open','2025-09-05',22,'LOW','["Established firm","Open tender","Community verified"]','Meru County'),
-    ('KE-HTH-2026-0036','Construction 100 rural dispensaries Kilifi','Kilifi','Health',380000000,'Coastal Builders Co','2015-03-15','open','2025-05-20',30,'LOW','["Open tender","Community participation","World Bank co-funded"]','Kilifi County'),
-    ('KE-RDS-2026-0037','Naiposha-Narok road 45km tarmac','Narok','Roads',1650000000,'Strabag East Africa','2015-06-01','open','2025-10-10',20,'LOW','["Established contractor","Clean","NEMA approved"]','Kenya National Highways Authority'),
-    ('KE-ICT-2026-0038','National government digital identity integration','National','ICT',4200000000,'Idemia Group France','2005-01-01','negotiated','2025-02-01',35,'LOW','["Strategic negotiated","Security vetted","Parliament approved","Biometric specialist"]','Ministry of Interior'),
-    ('KE-WAT-2026-0039','Mombasa island sewerage rehabilitation','Mombasa','Water',640000000,'Mott MacDonald Kenya','2010-01-01','open','2025-07-20',18,'LOW','["International consultant","Open bid","Clean"]','Coast Water Services'),
-    ('KE-AGR-2026-0040','Kilifi County coconut value chain support','Kilifi','Agriculture',75000000,'CoconutKE Processing','2019-11-10','open','2025-08-10',28,'LOW','["County-level project","Clean","Smallholder benefit verified"]','Kilifi County Agriculture')
+    ('KE-ICT-2026-0020','National ID digitisation system upgrade','National','ICT',3500000000,'IBM East Africa','2000-01-01','negotiated','2025-03-01',30,'LOW','["Established vendor","Negotiated proprietary system","Security vetted"]','National Registration Bureau')
     ON CONFLICT (contract_id) DO NOTHING;
   `);
-
   await client.query(`
     INSERT INTO ghost_projects (contract_ref,project_name,county,sector,claimed_status,satellite_status,amount_at_risk,detection_status,confidence_score,satellite_metadata) VALUES
-    ('KE-EDU-2024-0112','Kiambu Secondary School 8 Classroom Block','Kiambu','Education','8-classroom block built — completion certificate submitted','Bare land detected. No construction. Dense vegetation only.','2026-02-15',28000000,'ghost',96,'{"ndvi":0.72,"built_area_sqm":0,"imagery_source":"Sentinel-2","analysis_date":"2026-02-15"}'),
-    ('KE-WAT-2024-0087','Nakuru Water Treatment Plant Expansion','Nakuru','Water','Water treatment plant 100% complete — operational','~15% structural footprint detected. Foundation only. No equipment.','2026-01-20',142000000,'partial',89,'{"built_area_sqm":450,"expected_sqm":3200,"completion_pct":14,"imagery_source":"Sentinel-2"}'),
-    ('KE-RDS-2024-0043','Tana River Garissa Road Rehabilitation 35km','Tana River','Roads','Road fully rehabilitated — paved surface, drainage complete','Road surface unchanged from 2019. Potholed murram. No tarmac layer.','2026-03-01',285000000,'ghost',94,'{"road_surface":"murram_unchanged","baseline_year":2019,"imagery_source":"Sentinel-2"}'),
-    ('KE-INF-2025-0034','Kisii Central Market Renovation','Kisii','Infrastructure','Market renovation complete — stalls and drainage done','New roof and floor tiling confirmed. Renovation verified.','2026-02-28',12000000,'verified',98,'{"built_area_sqm":2100,"stalls_count":180,"imagery_source":"Sentinel-2"}'),
-    ('KE-HTH-2025-0067','Marsabit County Dispensary 3 Units','Marsabit','Health','Three dispensary units completed and operational','One unit partially complete (~40%). Two sites show bare ground.','2026-01-10',45000000,'partial',88,'{"units_complete":1,"units_partial":1,"units_ghost":2,"imagery_source":"Sentinel-2"}'),
-    ('KE-EDU-2025-0198','Turkana North Girls Secondary School','Turkana','Education','School complete — 12 classes, dormitory, lab','No structures detected. Undisturbed scrubland.','2026-03-10',98000000,'ghost',97,'{"built_area_sqm":0,"scrubland_cover":"high","imagery_source":"Sentinel-2"}'),
-    ('KE-RDS-2025-0321','Kakamega Urban Roads Drainage 12 Streets','Kakamega','Roads','Drainage complete on all 12 streets','Drainage confirmed on 4 streets (33%). 8 streets show no activity.','2026-02-05',76000000,'partial',85,'{"streets_complete":4,"streets_ghost":8,"imagery_source":"Sentinel-2"}'),
-    ('KE-WAT-2025-0156','Wajir Solar Water Kiosks 20 Units','Wajir','Water','20 solar water kiosks installed and operational','3 kiosks confirmed operational. 17 GPS coords show no infrastructure.','2026-01-25',34000000,'partial',92,'{"kiosks_confirmed":3,"kiosks_ghost":17,"imagery_source":"Sentinel-2"}'),
-    ('KE-AGR-2025-0089','Meru County Greenhouse Structures 50 Units','Meru','Agriculture','50 commercial greenhouse units complete','12 greenhouses confirmed. 38 sites show cultivated land only.','2026-02-20',62000000,'partial',90,'{"greenhouses_confirmed":12,"greenhouses_ghost":38,"imagery_source":"Sentinel-2"}'),
-    ('KE-INF-2025-0244','Mandera Border Post Upgrading','Mandera','Infrastructure','Border post fully upgraded — offices, canopy, parking','Canopy confirmed. Offices ~60% complete. Fence and parking absent.','2026-03-05',89000000,'partial',87,'{"canopy":"complete","offices_pct":60,"parking":"absent","imagery_source":"Sentinel-2"}')
+    ('KE-EDU-2024-0112','Kiambu Secondary School 8 Classroom Block','Kiambu','Education','8-classroom block built — completion certificate submitted','Bare land detected. No construction. Dense vegetation only.',28000000,'ghost',96,'{"ndvi":0.72,"built_area_sqm":0,"imagery_source":"Sentinel-2"}'),
+    ('KE-WAT-2024-0087','Nakuru Water Treatment Plant Expansion','Nakuru','Water','Water treatment plant 100% complete — operational','~15% structural footprint detected. Foundation only. No equipment.',142000000,'partial',89,'{"built_area_sqm":450,"expected_sqm":3200,"completion_pct":14,"imagery_source":"Sentinel-2"}'),
+    ('KE-RDS-2024-0043','Tana River Garissa Road Rehabilitation 35km','Tana River','Roads','Road fully rehabilitated — paved surface, drainage complete','Road surface unchanged from 2019. Potholed murram. No tarmac.',285000000,'ghost',94,'{"road_surface":"murram_unchanged","imagery_source":"Sentinel-2"}'),
+    ('KE-INF-2025-0034','Kisii Central Market Renovation','Kisii','Infrastructure','Market renovation complete — stalls and drainage done','New roof and floor tiling confirmed. Renovation verified.',12000000,'verified',98,'{"built_area_sqm":2100,"imagery_source":"Sentinel-2"}'),
+    ('KE-HTH-2025-0067','Marsabit County Dispensary 3 Units','Marsabit','Health','Three dispensary units completed and operational','One unit partially complete. Two sites show bare ground.',45000000,'partial',88,'{"units_complete":1,"units_ghost":2,"imagery_source":"Sentinel-2"}'),
+    ('KE-EDU-2025-0198','Turkana North Girls Secondary School','Turkana','Education','School complete — 12 classes, dormitory, lab','No structures detected. Undisturbed scrubland.',98000000,'ghost',97,'{"built_area_sqm":0,"imagery_source":"Sentinel-2"}'),
+    ('KE-RDS-2025-0321','Kakamega Urban Roads Drainage 12 Streets','Kakamega','Roads','Drainage complete on all 12 streets','Drainage confirmed on 4 streets. 8 streets show no activity.',76000000,'partial',85,'{"streets_complete":4,"streets_ghost":8,"imagery_source":"Sentinel-2"}'),
+    ('KE-WAT-2025-0156','Wajir Solar Water Kiosks 20 Units','Wajir','Water','20 solar water kiosks installed and operational','3 kiosks confirmed. 17 GPS coords show no infrastructure.',34000000,'partial',92,'{"kiosks_confirmed":3,"kiosks_ghost":17,"imagery_source":"Sentinel-2"}'),
+    ('KE-AGR-2025-0089','Meru County Greenhouse Structures 50 Units','Meru','Agriculture','50 commercial greenhouse units complete','12 greenhouses confirmed. 38 sites show cultivated land only.',62000000,'partial',90,'{"greenhouses_confirmed":12,"greenhouses_ghost":38,"imagery_source":"Sentinel-2"}'),
+    ('KE-INF-2025-0244','Mandera Border Post Upgrading','Mandera','Infrastructure','Border post fully upgraded — offices, canopy, parking','Canopy confirmed. Offices ~60% complete. Fence and parking absent.',89000000,'partial',87,'{"canopy":"complete","offices_pct":60,"imagery_source":"Sentinel-2"}')
     ON CONFLICT DO NOTHING;
   `);
-
   await client.query(`
     INSERT INTO reports (case_number,type,county,sector,description,amount,anonymous,status,ai_credibility_score,routing,keywords) VALUES
-    ('KW-2026-1001','Bribery / Kickbacks','Nairobi','Roads','Procurement officer at KURA demanded KES 2M from our company before registering our bid. Happened 14 January 2026 at Times Tower 3rd floor. We have a voice recording.',2000000,true,'reviewing',91,'DPP','["bribery","KURA","voice recording","2 million"]'),
-    ('KW-2026-1002','Ghost project / Fake delivery','Kiambu','Education','8 classroom blocks at Kiambu Girls Secondary do not exist. Headteacher confirms no construction. Contractor collected KES 28M. Parents distressed.',28000000,true,'escalated',95,'EACC','["ghost project","classroom","Kiambu","28 million","headteacher confirmed"]'),
-    ('KW-2026-1003','Procurement fraud','Nairobi','Health','MedSupply Africa charged KES 485M for hospital equipment at 3x market price. Same equipment available for KES 150M. I have market quotes from 4 suppliers.',485000000,true,'pending',87,'PPRA','["overpricing","medical equipment","market comparison"]'),
-    ('KW-2026-1004','Embezzlement of public funds','Kisumu','Education','School bursary KES 4.5M for Kisumu West sub-county not disbursed to students. Sub-county education officer unresponsive.',4500000,true,'pending',76,'EACC','["bursary","school fees","non-disbursement"]'),
-    ('KW-2026-1005','Nepotism / Political appointments','Nakuru','ICT','County governor appointed his cousin as ICT director without competitive recruitment. No ICT qualifications. Position pays KES 350K monthly.',350000,false,'pending',68,'EACC','["nepotism","appointment","no qualifications"]'),
-    ('KW-2026-1006','Police extortion','Mombasa','Security','Police at Mombasa port demand KES 5000-10000 per truck from transporters. Ongoing since October 2025. 50 trucks per day affected.',500000,true,'pending',82,'DPP','["police","extortion","Mombasa port","daily"]'),
-    ('KW-2026-1007','Procurement fraud','Kiambu','ICT','Financial system KES 95M awarded to FinSystems Ltd is a resale of open-source Odoo software worth KES 500K. County defrauded of KES 94.5M.',94500000,true,'reviewing',93,'DPP','["software","resale","open source","Odoo","FinSystems"]'),
-    ('KW-2026-1008','Bribery / Kickbacks','Turkana','Water','County water official taking 20% kickback from all contractors. Three contractors confirmed independently. Total project KES 145M so ~KES 29M in kickbacks.',29000000,true,'pending',79,'EACC','["kickback","water official","Turkana","multiple sources"]'),
-    ('KW-2026-1009','Ghost project / Fake delivery','Turkana','Education','Turkana North Girls Secondary School does not exist despite KES 98M paid. I drove to the GPS coordinates — it is empty scrubland.',98000000,true,'pending',94,'EACC','["ghost school","Turkana","98 million","GPS verified"]'),
-    ('KW-2026-1010','Land grabbing','Nairobi','Infrastructure','Well-connected individual grabbed 3 acres of public land in Ruiru designated for a public park. Has fenced it and begun construction. Have title deed numbers.',0,true,'pending',72,'EACC','["land grabbing","Ruiru","public park","title deed"]')
+    ('KW-2026-1001','Bribery / Kickbacks','Nairobi','Roads','Procurement officer at KURA demanded KES 2M from our company before registering our bid. Happened 14 January 2026 at Times Tower 3rd floor. We have a voice recording.',2000000,true,'reviewing',91,'DPP','["bribery","KURA","voice recording"]'),
+    ('KW-2026-1002','Ghost project / Fake delivery','Kiambu','Education','8 classroom blocks at Kiambu Girls Secondary do not exist. Headteacher confirms no construction. Contractor collected KES 28M.',28000000,true,'escalated',95,'EACC','["ghost project","classroom","Kiambu"]'),
+    ('KW-2026-1003','Procurement fraud','Nairobi','Health','MedSupply Africa charged KES 485M for hospital equipment at 3x market price. I have market quotes from 4 suppliers.',485000000,true,'pending',87,'PPRA','["overpricing","medical equipment"]'),
+    ('KW-2026-1004','Embezzlement of public funds','Kisumu','Education','School bursary KES 4.5M for Kisumu West sub-county not disbursed to students.',4500000,true,'pending',76,'EACC','["bursary","non-disbursement"]'),
+    ('KW-2026-1005','Bribery / Kickbacks','Turkana','Water','County water official taking 20% kickback from all contractors. Three contractors confirmed independently.',29000000,true,'pending',79,'EACC','["kickback","water official","multiple sources"]'),
+    ('KW-2026-1006','Ghost project / Fake delivery','Turkana','Education','Turkana North Girls Secondary School does not exist despite KES 98M paid. Empty scrubland at GPS coordinates.',98000000,true,'pending',94,'EACC','["ghost school","Turkana","GPS verified"]')
     ON CONFLICT (case_number) DO NOTHING;
   `);
-
-  console.log('✅ Kenya dataset loaded — 40 contracts, 10 ghost projects, 10 reports');
+  console.log('✅ Seed data loaded');
 };
 
 module.exports = { pool, initDB };
