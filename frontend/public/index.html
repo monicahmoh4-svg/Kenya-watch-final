@@ -576,9 +576,15 @@ function show(id) {
 setInterval(()=>{document.getElementById('clock-el').textContent=new Date().toLocaleTimeString('en-KE',{hour12:false})+' EAT';},1000);
 
 // ── API ───────────────────────────────────────────────────────────────────────
-async function api(path,opts={}) {
-  const r=await fetch(API+path,{headers:{'Content-Type':'application/json'},...opts});
-  return r.json();
+async function api(path, opts={}) {
+  try {
+    const r = await fetch(API + path, { headers: {'Content-Type':'application/json'}, ...opts });
+    try { return await r.json(); }
+    catch { return { success:false, _httpStatus:r.status, error:'HTTP '+r.status }; }
+  } catch(e) {
+    console.warn('API:', path, e.message);
+    return { success:false, error:e.message, _networkError:true };
+  }
 }
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
@@ -682,15 +688,38 @@ async function loadDashboard() {
 
   // ── Health panel ─────────────────────────────────────────────────────────
   try {
-    const hRes = val(healthRes);
-    const isOk = hRes.status === 'ok';
-    document.getElementById('health-panel').innerHTML = `
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px"><span>Backend API</span><span class="badge ${isOk?'bl':'bh'}">${isOk?'ONLINE':'DEGRADED'}</span></div>
-        <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px"><span>Database</span><span class="badge ${hRes.database==='connected'?'bl':'bh'}">${(hRes.database||'unknown').toUpperCase()}</span></div>
-        <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px"><span>AI Service</span><span class="badge ${hRes.ai==='configured'?'bl':'bm'}">${hRes.ai==='configured'?'READY':'NEEDS KEY'}</span></div>
-        <div style="font-family:var(--mono);font-size:10px;color:var(--t3);margin-top:4px">v${hRes.version||'3.0.0'} · ${new Date(hRes.timestamp||Date.now()).toLocaleTimeString('en-KE')}</div>
-      </div>`;
+    const hRaw = val(healthRes);
+    const networkErr = hRaw._networkError;
+    const isOk = hRaw.status === 'ok';
+    const dbOk = hRaw.database === 'connected';
+    const aiOk = hRaw.ai === 'configured';
+
+    if (networkErr || (!hRaw.status && !hRaw.database)) {
+      // Backend completely unreachable
+      document.getElementById('health-panel').innerHTML = `
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px"><span>Backend API</span><span class="badge bh">UNREACHABLE</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px"><span>Database</span><span class="badge bh">UNKNOWN</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px"><span>AI Service</span><span class="badge bh">UNKNOWN</span></div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--red);margin-top:6px">Cannot reach: ${API}</div>
+          <div style="font-size:11px;color:var(--t2);margin-top:4px;line-height:1.6">
+            Check Railway:<br>
+            1. Backend service is deployed &amp; running<br>
+            2. DATABASE_URL variable is set<br>
+            3. ANTHROPIC_API_KEY variable is set
+          </div>
+        </div>`;
+    } else {
+      document.getElementById('health-panel').innerHTML = `
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px"><span>Backend API</span><span class="badge ${isOk?'bl':'bh'}">${isOk?'ONLINE':'DEGRADED'}</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px"><span>Database</span><span class="badge ${dbOk?'bl':'bh'}">${dbOk?'CONNECTED':'DISCONNECTED'}</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px"><span>AI Service</span><span class="badge ${aiOk?'bl':'bm'}">${aiOk?'READY':'NEEDS KEY'}</span></div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--t3);margin-top:4px">v${hRaw.version||'3.0.0'} · ${new Date(hRaw.timestamp||Date.now()).toLocaleTimeString('en-KE')}</div>
+          ${!dbOk ? '<div style="font-size:11px;color:var(--red);margin-top:4px">⚠ Add DATABASE_URL in Railway → Variables</div>' : ''}
+          ${!aiOk ? '<div style="font-size:11px;color:var(--amber);margin-top:2px">⚠ Add ANTHROPIC_API_KEY in Railway → Variables</div>' : ''}
+        </div>`;
+    }
   } catch(e) {
     document.getElementById('health-panel').innerHTML = '<div style="color:var(--t3);font-size:12px">Checking status...</div>';
     console.warn('Health error:', e.message);
