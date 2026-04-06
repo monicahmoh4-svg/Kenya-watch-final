@@ -614,58 +614,120 @@ async function loadDashboard() {
     document.getElementById('du').textContent = 'Updated ' + new Date().toLocaleTimeString('en-KE',{hour12:false});
   } catch(e) { console.warn('Stats error:', e.message); }
 
-  // ── County bars ──────────────────────────────────────────────────────────
+  // ── County bars — NECS 2023-24 real data ────────────────────────────────
   try {
     const cData = val(analyticsRes).data || {};
-    const counties = (cData.county_breakdown || []).slice(0, 8);
+    const counties = (cData.county_breakdown || []).slice(0, 15);
     if (counties.length) {
       const max = Math.max(...counties.map(c => c.avg_risk||0)) || 100;
-      document.getElementById('county-bars').innerHTML = counties.map(c => {
-        const cls = c.avg_risk >= 75 ? 'ph' : c.avg_risk >= 40 ? 'pm' : 'pl';
-        return `<div class="ci"><div class="cn">${c.county}</div><div class="bw"><div class="bar ${cls}" style="width:${(c.avg_risk/max)*100}%"></div></div><div class="cv">${c.avg_risk}</div></div>`;
-      }).join('');
+      const likelihoodColor = l => l==='Very High'?'var(--red)':l==='High'?'var(--amber)':'var(--green)';
+      document.getElementById('county-bars').innerHTML =
+        `<div style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-bottom:10px;letter-spacing:.08em">SOURCE: NECS 2023-24 (EACC/KNBS) · BRIBERY LIKELIHOOD INDEX</div>` +
+        counties.map(c => {
+          const cls = c.avg_risk >= 75 ? 'ph' : c.avg_risk >= 40 ? 'pm' : 'pl';
+          const lc = likelihoodColor(c.bribery_likelihood);
+          return `<div class="ci" style="margin-bottom:7px">
+            <div class="cn" style="width:108px;font-size:11px">${c.county}</div>
+            <div class="bw"><div class="bar ${cls}" style="width:${(c.avg_risk/max)*100}%"></div></div>
+            <div style="width:28px;text-align:right;font-family:var(--mono);font-size:10px;color:var(--t3)">${c.avg_risk}</div>
+            <div style="width:60px;text-align:right;font-size:10px;color:${lc};margin-left:6px">${c.bribery_likelihood||''}</div>
+          </div>`;
+        }).join('') +
+        `<div style="font-size:10px;color:var(--t3);margin-top:10px;line-height:1.7">
+          <strong style="color:var(--text)">Key drivers:</strong> Weak procurement systems, political patronage, poor accountability.
+          Only ~2.8% of bribery cases are reported (EACC 2024).
+        </div>`;
     } else {
-      document.getElementById('county-bars').innerHTML = '<div style="color:var(--t3);font-size:12px">No county data yet — contracts will populate this.</div>';
+      document.getElementById('county-bars').innerHTML = '<div style="color:var(--t3);font-size:12px">Loading county intelligence...</div>';
     }
   } catch(e) {
-    document.getElementById('county-bars').innerHTML = '<div style="color:var(--t3);font-size:12px">Loading county data...</div>';
+    document.getElementById('county-bars').innerHTML = '<div style="color:var(--t3);font-size:12px">County data unavailable.</div>';
     console.warn('County bars error:', e.message);
   }
 
-  // ── Risk distribution ────────────────────────────────────────────────────
+  // ── Risk distribution — EACC procurement breakdown ───────────────────────
   try {
     const cData = val(analyticsRes).data || {};
-    const rd = cData.risk_distribution || [];
-    if (rd.length) {
-      const total = rd.reduce((s,r) => s + parseInt(r.count), 0) || 1;
-      document.getElementById('risk-dist').innerHTML = rd.map(r => {
+    const prd = cData.procurement_risk_distribution || [];
+    const dbRd = cData.risk_distribution || [];
+
+    let html = '';
+
+    // EACC procurement breakdown (always shown)
+    if (prd.length) {
+      const totalShare = prd.reduce((s,r)=>s+r.share_pct,0)||100;
+      html += `<div style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-bottom:10px;letter-spacing:.08em">EACC PROCUREMENT CORRUPTION — SHARE OF TOTAL LOSSES</div>`;
+      html += prd.map(r => {
+        const cls = r.risk_level==='HIGH'?'ph':'pm';
+        const tc  = r.risk_level==='HIGH'?'var(--red)':'var(--amber)';
+        return `<div style="margin-bottom:11px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:12px">
+            <span style="color:var(--text)">${r.category}</span>
+            <span style="font-family:var(--mono);font-size:10px;color:${tc}">${r.share_pct}%</span>
+          </div>
+          <div class="pbar"><div class="pfill ${cls}" style="width:${r.share_pct/totalShare*100}%"></div></div>
+          <div style="font-size:10px;color:var(--t3);margin-top:3px">${r.description}</div>
+        </div>`;
+      }).join('');
+      html += `<div style="font-size:10px;color:var(--t3);margin-top:8px;padding:8px;background:var(--bg3);border-radius:6px;line-height:1.6">
+        <strong style="color:var(--amber)">Key Insight:</strong> Over 70% of corruption losses come from Infrastructure and Energy contracts despite being fewer in number.
+      </div>`;
+    }
+
+    // Also show scanned contract breakdown if available
+    if (dbRd.length) {
+      const total = dbRd.reduce((s,r)=>s+parseInt(r.count),0)||1;
+      html += `<div style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-top:14px;margin-bottom:8px;letter-spacing:.08em">SCANNED CONTRACTS — AI RISK LEVELS</div>`;
+      html += dbRd.map(r => {
         const cls = r.risk_level==='HIGH'?'ph':r.risk_level==='MEDIUM'?'pm':'pl';
         const tc  = r.risk_level==='HIGH'?'var(--red)':r.risk_level==='MEDIUM'?'var(--amber)':'var(--green)';
-        return `<div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:13px"><span style="color:${tc}">● ${r.risk_level}</span><span style="font-family:var(--mono);font-size:11px">${r.count} (${Math.round(r.count/total*100)}%)</span></div><div class="pbar"><div class="pfill ${cls}" style="width:${r.count/total*100}%"></div></div></div>`;
+        return `<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:12px"><span style="color:${tc}">● ${r.risk_level}</span><span style="font-family:var(--mono);font-size:10px">${r.count} contracts (${Math.round(r.count/total*100)}%)</span></div><div class="pbar"><div class="pfill ${cls}" style="width:${r.count/total*100}%"></div></div></div>`;
       }).join('');
+    }
+
+    if (html) {
+      document.getElementById('risk-dist').innerHTML = html;
     } else {
-      document.getElementById('risk-dist').innerHTML = '<div style="color:var(--t3);font-size:12px">Scan contracts to populate risk data.</div>';
+      document.getElementById('risk-dist').innerHTML = '<div style="color:var(--t3);font-size:12px">Loading intelligence data...</div>';
     }
   } catch(e) {
-    document.getElementById('risk-dist').innerHTML = '<div style="color:var(--t3);font-size:12px">Loading...</div>';
+    document.getElementById('risk-dist').innerHTML = '<div style="color:var(--t3);font-size:12px">Risk data unavailable.</div>';
     console.warn('Risk dist error:', e.message);
   }
 
-  // ── Sector breakdown ─────────────────────────────────────────────────────
+  // ── Sector breakdown — EACC 10 highest-risk sectors ─────────────────────
   try {
     const cData = val(analyticsRes).data || {};
-    const sd = (cData.sector_breakdown || []).slice(0, 5);
+    const sd = (cData.sector_breakdown || []).slice(0, 10);
     if (sd.length) {
       const max2 = Math.max(...sd.map(s => s.avg_risk||0)) || 100;
-      document.getElementById('sector-dist').innerHTML = sd.map(s => {
-        const cls = s.avg_risk >= 75 ? 'ph' : s.avg_risk >= 40 ? 'pm' : 'pl';
-        return `<div class="ci"><div class="cn" style="width:110px">${s.sector}</div><div class="bw"><div class="bar ${cls}" style="width:${(s.avg_risk/max2)*100}%"></div></div><div class="cv">${s.avg_risk}</div></div>`;
-      }).join('');
+      const freqColor = f => f==='Very High'||f==='High'?'var(--red)':f==='Medium'?'var(--amber)':'var(--green)';
+      document.getElementById('sector-dist').innerHTML =
+        `<div style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-bottom:10px;letter-spacing:.08em">SOURCE: EACC ANNUAL REPORTS · BRIBERY FREQUENCY × VALUE</div>` +
+        sd.map((s,i) => {
+          const cls = s.avg_risk >= 75 ? 'ph' : s.avg_risk >= 55 ? 'pm' : 'pl';
+          const fc = freqColor(s.frequency||'');
+          return `<div style="margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:12px;align-items:center">
+              <span style="color:var(--text)">${i+1}. ${s.sector}</span>
+              <div style="display:flex;gap:6px;align-items:center">
+                <span style="font-size:9px;color:${fc};font-family:var(--mono)">${s.frequency||''}</span>
+                <span style="font-family:var(--mono);font-size:10px;color:var(--t3)">${s.avg_risk}</span>
+              </div>
+            </div>
+            <div class="pbar"><div class="pfill ${cls}" style="width:${(s.avg_risk/max2)*100}%"></div></div>
+            <div style="font-size:10px;color:var(--t3);margin-top:3px">${s.description||''}</div>
+          </div>`;
+        }).join('') +
+        `<div style="font-size:10px;color:var(--t3);margin-top:8px;padding:8px;background:var(--bg3);border-radius:6px;line-height:1.6">
+          <strong style="color:var(--text)">Pattern:</strong> Daily services (police, health, county) → frequent small bribes.
+          High-level systems (procurement, land, judiciary) → rare but massive losses.
+        </div>`;
     } else {
-      document.getElementById('sector-dist').innerHTML = '<div style="color:var(--t3);font-size:12px">No sector data yet.</div>';
+      document.getElementById('sector-dist').innerHTML = '<div style="color:var(--t3);font-size:12px">Loading sector intelligence...</div>';
     }
   } catch(e) {
-    document.getElementById('sector-dist').innerHTML = '<div style="color:var(--t3);font-size:12px">Loading...</div>';
+    document.getElementById('sector-dist').innerHTML = '<div style="color:var(--t3);font-size:12px">Sector data unavailable.</div>';
     console.warn('Sector dist error:', e.message);
   }
 
