@@ -109,6 +109,7 @@ const createTables = async (client) => {
 
 const runMigrations = async (client) => {
   const cols = [
+    ['contracts',      'sector',            'VARCHAR(100)'],
     ['contracts',      'ocds_ocid',         'VARCHAR(120)'],
     ['contracts',      'source',            "VARCHAR(50) DEFAULT 'manual'"],
     ['contracts',      'procuring_entity',  'VARCHAR(300)'],
