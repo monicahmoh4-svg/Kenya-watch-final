@@ -16,6 +16,9 @@ const initDB = async () => {
       const client = await pool.connect();
       console.log('✅ PostgreSQL connected');
       await createTables(client);
+      await client.query('ALTER TABLE contracts ADD COLUMN IF NOT EXISTS sector VARCHAR(100)').catch((e) => {
+        console.warn('sector column migration (inline):', e.message);
+      });
       await runMigrations(client);
       await seedIfEmpty(client);
       client.release();
@@ -109,6 +112,7 @@ const createTables = async (client) => {
 
 const runMigrations = async (client) => {
   const cols = [
+    ['contracts',      'sector',            'VARCHAR(100)'],
     ['contracts',      'ocds_ocid',         'VARCHAR(120)'],
     ['contracts',      'source',            "VARCHAR(50) DEFAULT 'manual'"],
     ['contracts',      'procuring_entity',  'VARCHAR(300)'],
