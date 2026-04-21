@@ -867,8 +867,16 @@ setInterval(()=>{document.getElementById('clock-el').textContent=new Date().toLo
 async function api(path,opts={}){
   try{
     const r=await fetch(API+path,{headers:{'Content-Type':'application/json'},...opts});
-    try{return await r.json();}catch{return{success:false,_s:r.status};}
-  }catch(e){return{success:false,error:e.message,_net:true};}
+    if(!r.ok && r.status===429){return{success:false,error:'Rate limited — wait 1 minute and try again',_status:429};}
+    try{
+      const j=await r.json();
+      // If the server returned a non-2xx with a JSON body, surface the error
+      if(!r.ok && !j.success) return{success:false,error:j.error||`HTTP ${r.status}`,_status:r.status};
+      return j;
+    }catch{return{success:false,error:`HTTP ${r.status} — unexpected response`,_status:r.status};}
+  }catch(e){
+    return{success:false,error:e.message,_net:true};
+  }
 }
 
 // ══ NAV ════════════════════════════════════════════════════════════════════
@@ -1098,90 +1106,116 @@ let syncPoller = null;
 async function startSync(){
   const year = document.getElementById('sync-year').value;
   const btn  = document.getElementById('sync-btn');
+  const logEl = document.getElementById('sync-log');
+  const srcEl = document.getElementById('sync-sources');
+
   btn.disabled = true;
-  btn.innerHTML = '<span class="spin"></span> Starting sync...';
+  btn.innerHTML = '<span class="spin"></span> Starting...';
+  logEl.innerHTML = '<div style="color:var(--t2);font-size:13px;padding:12px 0">⏳ Sending request to backend...</div>';
 
-  try {
-    const { success, message, error } = await api('/api/sync/ocds', {
-      method: 'POST',
-      body: JSON.stringify({ year: parseInt(year) })
-    });
-
-    if (success) {
-      // Show success message in the page instead of alert
-      const logEl = document.getElementById('sync-log');
-      logEl.innerHTML = `<div style="background:rgba(0,169,79,.07);border:1.5px solid rgba(0,169,79,.22);border-radius:8px;padding:14px;font-size:13px;color:var(--gtext);line-height:1.8">
-        ✅ <strong>Sync started for year ${year}</strong><br>
-        This runs in the background on the server. The table below will update automatically every 10 seconds while running.
-        <br><small style="color:var(--t3)">Large years (2024/2025) can take 5–10 minutes.</small>
-      </div>`;
-      // Load status immediately and then poll every 10s while running
-      await loadSyncStatus();
-      clearInterval(syncPoller);
-      syncPoller = setInterval(async () => {
-        await loadSyncStatus();
-        // Stop polling once no running syncs
-        const rows = document.querySelectorAll('#sync-log .badge');
-        const isRunning = Array.from(rows).some(b => b.textContent === 'RUNNING');
-        if (!isRunning) { clearInterval(syncPoller); syncPoller = null; }
-      }, 10000);
-    } else {
-      document.getElementById('sync-log').innerHTML =
-        `<div style="background:rgba(192,57,43,.06);border:1.5px solid rgba(192,57,43,.2);border-radius:8px;padding:14px;font-size:13px;color:var(--red)">❌ ${error || 'Failed to start sync. Check backend is running and DATABASE_URL is set.'}</div>`;
-    }
-  } catch(e) {
-    document.getElementById('sync-log').innerHTML =
-      `<div style="background:rgba(192,57,43,.06);border:1.5px solid rgba(192,57,43,.2);border-radius:8px;padding:14px;font-size:13px;color:var(--red)">❌ Network error: ${e.message}<br><small>Check that your backend is deployed and reachable at: ${API}</small></div>`;
-  }
+  const result = await api('/api/sync/ocds', {
+    method: 'POST',
+    body:   JSON.stringify({ year: parseInt(year) }),
+  });
 
   btn.disabled = false;
   btn.innerHTML = '🔄 Start OCDS Sync';
+
+  if (result.success) {
+    logEl.innerHTML =
+      '<div style="background:rgba(0,169,79,.07);border:1.5px solid rgba(0,169,79,.22);' +
+      'border-radius:8px;padding:14px;font-size:13px;color:var(--gtext);line-height:1.9">' +
+      '✅ <strong>Sync started for year ' + year + '</strong><br>' +
+      'Running in the background on the server. The table will auto-refresh every 10 s.<br>' +
+      '<small style="color:var(--t3)">2025 ≈ 3–5 min · 2024 ≈ 5–10 min · 2023 ≈ 5–10 min</small></div>';
+
+    // Auto-refresh until no running sync remains
+    clearInterval(syncPoller);
+    syncPoller = setInterval(async () => {
+      await loadSyncStatus();
+      const running = document.querySelectorAll('#sync-log .badge');
+      const isRunning = Array.from(running).some(b => b.textContent === 'RUNNING');
+      if (!isRunning) { clearInterval(syncPoller); syncPoller = null; }
+    }, 10000);
+    // also load immediately
+    await loadSyncStatus();
+  } else {
+    logEl.innerHTML =
+      '<div style="background:rgba(192,57,43,.06);border:1.5px solid rgba(192,57,43,.2);' +
+      'border-radius:8px;padding:14px;font-size:13px;color:var(--red);line-height:1.8">' +
+      '❌ <strong>Sync failed to start</strong><br>' +
+      (result.error || 'Unknown error') + '<br><br>' +
+      '<small>Check that your backend is running on Railway and DATABASE_URL is set.</small></div>';
+  }
 }
 
 async function loadSyncStatus(){
   const logEl = document.getElementById('sync-log');
   const srcEl = document.getElementById('sync-sources');
-  try {
-    const { data, success } = await api('/api/sync/status');
-    if (!success || !data) {
-      logEl.innerHTML = '<div style="color:var(--red);font-size:13px">❌ Could not load status — backend may be unreachable.</div>';
-      return;
-    }
-    const logs = data.sync_logs || [];
-    if (logs.length) {
-      logEl.innerHTML = '<table class="tbl"><thead><tr><th>Year</th><th>Status</th><th>Records Imported</th><th>Started</th><th>Finished</th></tr></thead><tbody>' +
-        logs.map(l => `<tr>
-          <td style="font-weight:700">${l.year}</td>
-          <td><span class="badge ${l.status==='complete'?'bl2':l.status==='running'?'bb2':'bh2'}">${l.status.toUpperCase()}</span></td>
-          <td style="font-family:'Space Mono',monospace;font-size:11px">${(parseInt(l.records)||0).toLocaleString()}</td>
-          <td style="font-family:'Space Mono',monospace;font-size:10px;color:var(--t3)">${new Date(l.started_at).toLocaleString('en-KE')}</td>
-          <td style="font-family:'Space Mono',monospace;font-size:10px;color:var(--t3)">${l.finished_at ? new Date(l.finished_at).toLocaleString('en-KE') : '—'}</td>
-        </tr>`).join('') +
-        '</tbody></table>';
-    } else {
-      logEl.innerHTML = '<div style="color:var(--t3);font-size:13px;line-height:1.8">No syncs yet.<br>Select a year above and click <strong>Start OCDS Sync</strong> to import real Kenya government contracts.</div>';
-    }
+  if (!logEl || !srcEl) return;
 
-    const sources = data.by_source || [];
-    if (sources.length) {
-      const maxCount = Math.max(...sources.map(s => parseInt(s.count) || 0)) || 1;
-      srcEl.innerHTML = sources.map(s => {
-        const cnt = parseInt(s.count) || 0;
-        const lbl = s.source === 'ppip_ocds' ? '📡 PPIP OCDS (Real)' : '✏️ Manual / Seed';
-        return `<div class="crow" style="margin-bottom:11px">
-          <div class="cn" style="width:130px;font-size:11.5px">${lbl}</div>
-          <div class="btrack"><div class="bfill" style="width:${(cnt/maxCount*100).toFixed(0)}%;background:${s.source==='ppip_ocds'?'var(--blue)':'var(--green)'}"></div></div>
-          <div style="min-width:70px;text-align:right;font-family:'Space Mono',monospace;font-size:11px;color:var(--t2)">${cnt.toLocaleString()}</div>
-        </div>`;
+  const result = await api('/api/sync/status');
+
+  if (!result.success) {
+    logEl.innerHTML =
+      '<div style="background:rgba(192,57,43,.06);border:1.5px solid rgba(192,57,43,.2);' +
+      'border-radius:8px;padding:12px;font-size:12.5px;color:var(--red);line-height:1.8">' +
+      '❌ <strong>Could not load status</strong><br>' +
+      (result.error || 'Backend unreachable') + '<br><br>' +
+      '<small style="color:var(--t3)">Backend URL: ' + API + '</small></div>';
+    return;
+  }
+
+  const data  = result.data || {};
+  const logs  = data.sync_logs  || [];
+  const srcs  = data.by_source  || [];
+  const total = parseInt(data.total_contracts) || 0;
+
+  // Render sync log table
+  if (logs.length) {
+    logEl.innerHTML =
+      '<table class="tbl"><thead><tr>' +
+      '<th>Year</th><th>Status</th><th>Records Imported</th><th>Started</th><th>Finished</th>' +
+      '</tr></thead><tbody>' +
+      logs.map(l => {
+        const badge = l.status === 'complete' ? 'bl2' : l.status === 'running' ? 'bb2' : 'bh2';
+        const fin   = l.finished_at ? new Date(l.finished_at).toLocaleString('en-KE') : '—';
+        const err   = l.error_msg ? '<br><small style="color:var(--red)">' + l.error_msg + '</small>' : '';
+        return '<tr>' +
+          '<td style="font-weight:700">' + l.year + '</td>' +
+          '<td><span class="badge ' + badge + '">' + l.status.toUpperCase() + '</span>' + err + '</td>' +
+          '<td style="font-family:Space Mono,monospace;font-size:11px">' + (parseInt(l.records)||0).toLocaleString() + '</td>' +
+          '<td style="font-family:Space Mono,monospace;font-size:10px;color:var(--t3)">' + new Date(l.started_at).toLocaleString('en-KE') + '</td>' +
+          '<td style="font-family:Space Mono,monospace;font-size:10px;color:var(--t3)">' + fin + '</td>' +
+          '</tr>';
       }).join('') +
-      `<div class="ibox"><strong>Total contracts in database:</strong> ${parseInt(data.total_contracts).toLocaleString()}</div>`;
-    } else {
-      srcEl.innerHTML = '<div style="color:var(--t3);font-size:13px">No contract data yet.</div>';
-    }
-  } catch(e) {
-    logEl.innerHTML = `<div style="color:var(--red);font-size:13px">❌ Failed to load status: ${e.message}</div>`;
+      '</tbody></table>';
+  } else {
+    logEl.innerHTML =
+      '<div style="color:var(--t3);font-size:13px;line-height:1.8">' +
+      'No syncs yet.<br>Select a year and click <strong>Start OCDS Sync</strong> to import real Kenya contracts.</div>';
+  }
+
+  // Render by-source breakdown
+  if (srcs.length) {
+    const maxCnt = Math.max(...srcs.map(s => parseInt(s.count) || 0)) || 1;
+    srcEl.innerHTML = srcs.map(s => {
+      const cnt   = parseInt(s.count) || 0;
+      const label = s.source === 'ppip_ocds' ? '📡 PPIP OCDS (Real)' : '✏️  Manual / Seed';
+      const color = s.source === 'ppip_ocds' ? 'var(--blue)' : 'var(--green)';
+      const pct   = (cnt / maxCnt * 100).toFixed(0);
+      return '<div class="crow" style="margin-bottom:11px">' +
+        '<div class="cn" style="width:135px;font-size:11.5px">' + label + '</div>' +
+        '<div class="btrack"><div class="bfill" style="width:' + pct + '%;background:' + color + '"></div></div>' +
+        '<div style="min-width:75px;text-align:right;font-family:Space Mono,monospace;font-size:11px;color:var(--t2)">' + cnt.toLocaleString() + '</div>' +
+        '</div>';
+    }).join('') +
+    '<div class="ibox"><strong>Total contracts in database:</strong> ' + total.toLocaleString() + '</div>';
+  } else {
+    srcEl.innerHTML = '<div style="color:var(--t3);font-size:13px">No contracts synced yet.</div>';
   }
 }
+
 
 // ══ AI CHAT ════════════════════════════════════════════════════════════════
 const AID='ai_'+Math.random().toString(36).slice(2);
