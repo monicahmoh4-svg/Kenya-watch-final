@@ -30,6 +30,9 @@ const initDB = async () => {
 };
 
 const createTables = async (client) => {
+  // Drop old contracts table if it exists to ensure clean schema with all required columns
+  await client.query('DROP TABLE IF EXISTS contracts CASCADE').catch(() => {});
+
   await client.query(`
     CREATE TABLE IF NOT EXISTS contracts (
       id              SERIAL PRIMARY KEY,
@@ -209,22 +212,14 @@ const seedIfEmpty = async (client) => {
     const count = parseInt(rows[0].count);
     if (count === 0) {
       console.log('🌱 Seeding data...');
-      // First, try to add sector column if it doesn't exist
-      try {
-        await client.query('ALTER TABLE contracts ADD COLUMN sector VARCHAR(100)');
-        console.log('✅ Added sector column');
-      } catch (e) {
-        console.log('ℹ️  sector column already exists or cannot be added');
-      }
-
-      // Seed contracts WITHOUT sector field - let it be NULL
+      // Seed contracts
       for (const c of CONTRACTS_SEED) {
         try {
           await client.query(
-            `INSERT INTO contracts (contract_id, description, county, value, supplier, risk_score, risk_level, flags)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            `INSERT INTO contracts (contract_id, description, county, sector, value, supplier, risk_score, risk_level, flags)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
              ON CONFLICT (contract_id) DO NOTHING`,
-            [c.contract_id, c.description, c.county, c.value, c.supplier, c.risk_score, c.risk_level, c.flags]
+            [c.contract_id, c.description, c.county, c.sector || null, c.value, c.supplier, c.risk_score, c.risk_level, c.flags]
           );
         } catch (e) {
           console.error(`Failed to seed contract ${c.contract_id}:`, e.message);
