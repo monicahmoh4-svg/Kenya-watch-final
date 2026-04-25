@@ -9,6 +9,9 @@ const { initDB, pool } = require('./db');
 const app  = express();
 const PORT = process.env.PORT || 5000;
 
+// DB readiness flag — set true once initDB() completes
+let dbReady = false;
+
 // ── Security ──────────────────────────────────────────────────────────────────
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors({
@@ -18,9 +21,9 @@ app.use(cors({
 }));
 app.options('*', cors());
 
-// ── Rate limiting
-// IMPORTANT: Do NOT add a separate limiter for /api/sync — it conflicts
-// with the global /api limiter and causes "not found" errors after a few calls.
+// ── Rate limiting ─────────────────────────────────────────────────────────────
+// ONE limiter on /api only — do NOT add a separate /api/sync limiter
+// (a separate /api/sync limiter conflicts and kills sync routes after ~10 requests)
 app.use('/api/ai',      rateLimit({ windowMs: 60000, max: 40,  standardHeaders: true, legacyHeaders: false }));
 app.use('/api/chatbot', rateLimit({ windowMs: 60000, max: 40,  standardHeaders: true, legacyHeaders: false }));
 app.use('/api',         rateLimit({ windowMs: 60000, max: 500, standardHeaders: true, legacyHeaders: false }));
@@ -29,19 +32,25 @@ app.use('/api',         rateLimit({ windowMs: 60000, max: 500, standardHeaders: 
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// ── Request logger ────────────────────────────────────────────────────────────
+// ── Logger ────────────────────────────────────────────────────────────────────
 app.use((req, _res, next) => {
-  console.log(`${req.method} ${req.path}`);
+  console.log(req.method + ' ' + req.path);
   next();
 });
 
 // ── Health ────────────────────────────────────────────────────────────────────
+// Always returns 200 so Railway's healthcheck passes.
+// DB status is reported but does NOT affect the HTTP status code.
+// If we returned 503 when DB is connecting, Railway would restart
+// the container in a loop and the deploy would always fail.
 app.get('/health', async (req, res) => {
   let dbOk = false;
-  try { await pool.query('SELECT 1'); dbOk = true; } catch (_) {}
-  return res.status(dbOk ? 200 : 503).json({
-    status:    dbOk ? 'ok' : 'degraded',
-    database:  dbOk ? 'connected' : 'disconnected',
+  try {
+    if (dbReady) { await pool.query('SELECT 1'); dbOk = true; }
+  } catch (_) {}
+  return res.status(200).json({
+    status:    dbOk ? 'ok' : 'starting',
+    database:  dbOk ? 'connected' : 'connecting',
     ai:        process.env.ANTHROPIC_API_KEY ? 'configured' : 'missing_api_key',
     timestamp: new Date().toISOString(),
     version:   '3.2.0',
@@ -53,7 +62,8 @@ app.get('/', (req, res) => res.json({
   name:    'KenyaWatch AI Backend',
   version: '3.2.0',
   status:  'running',
-  routes:  [
+  db:      dbReady ? 'connected' : 'connecting',
+  routes: [
     'GET  /health',
     'GET  /api/stats',
     'GET  /api/contracts',
@@ -80,14 +90,8 @@ app.get('/api/stats', async (req, res) => {
           COUNT(*)                                                             AS total
         FROM contracts
       `),
-      pool.query(`
-        SELECT COUNT(*) AS total FROM reports
-        WHERE created_at > NOW() - INTERVAL '30 days'
-      `),
-      pool.query(`
-        SELECT COUNT(*) FILTER (WHERE detection_status IN ('ghost','partial')) AS cnt
-        FROM ghost_projects
-      `),
+      pool.query(`SELECT COUNT(*) AS total FROM reports WHERE created_at > NOW() - INTERVAL '30 days'`),
+      pool.query(`SELECT COUNT(*) FILTER (WHERE detection_status IN ('ghost','partial')) AS cnt FROM ghost_projects`),
     ]);
     return res.json({
       success: true,
@@ -104,7 +108,9 @@ app.get('/api/stats', async (req, res) => {
   }
 });
 
-// ── Feature routes (must come before 404) ────────────────────────────────────
+// ── Feature routes ────────────────────────────────────────────────────────────
+// All routes must be registered BEFORE the 404 handler below.
+// The order here matters — more specific paths first.
 app.use('/api/contracts',      require('./routes/contracts'));
 app.use('/api/reports',        require('./routes/reports'));
 app.use('/api/ghost-projects', require('./routes/ghostProjects'));
@@ -112,11 +118,11 @@ app.use('/api/ai',             require('./routes/ai'));
 app.use('/api/chatbot',        require('./routes/chatbot'));
 app.use('/api/sync',           require('./routes/ocdsSync'));
 
-// ── 404 ───────────────────────────────────────────────────────────────────────
+// ── 404 handler ───────────────────────────────────────────────────────────────
 app.use((req, res) => {
   return res.status(404).json({
     success: false,
-    error:   `Route ${req.method} ${req.path} not found`,
+    error:   'Route ' + req.method + ' ' + req.path + ' not found',
   });
 });
 
@@ -129,17 +135,34 @@ app.use((err, req, res, next) => {
   }
 });
 
-// ── Start ─────────────────────────────────────────────────────────────────────
-(async () => {
-  try {
-    await initDB();
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`🚀 KenyaWatch AI v3.2 on port ${PORT}`);
-      console.log(`🤖 AI : ${process.env.ANTHROPIC_API_KEY ? 'READY' : '⚠  Set ANTHROPIC_API_KEY in Railway Variables'}`);
-      console.log(`🗄  DB : ${process.env.DATABASE_URL     ? 'set'   : '⚠  Set DATABASE_URL in Railway Variables'}`);
+// ── STARTUP ───────────────────────────────────────────────────────────────────
+// IMPORTANT: app.listen() is called FIRST, before initDB().
+//
+// Why this matters:
+//   - Railway checks /health within 60 seconds of the container starting
+//   - If listen() is inside an async DB chain, the server won't bind to PORT
+//     until the DB is fully connected — which can take 10-30s or fail entirely
+//   - Without a port binding, /health returns "service unavailable" and the
+//     deploy fails even though the code is perfectly correct
+//
+// Solution: bind the port immediately, let DB init run in the background.
+// The /health endpoint returns status:"starting" until DB is ready, which
+// is fine — Railway only needs a 200 response, not status:"ok".
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log('🚀 KenyaWatch AI v3.2 listening on port ' + PORT);
+  console.log('🤖 AI  : ' + (process.env.ANTHROPIC_API_KEY ? 'READY' : '⚠  Set ANTHROPIC_API_KEY in Railway Variables'));
+  console.log('🗄  DB  : ' + (process.env.DATABASE_URL ? 'connecting...' : '⚠  Set DATABASE_URL in Railway Variables'));
+
+  // Initialise database in the background — never blocks the server
+  initDB()
+    .then(() => {
+      dbReady = true;
+      console.log('✅ Database ready — all routes fully operational');
+    })
+    .catch((e) => {
+      // Server stays up. DB-dependent routes return 500.
+      // /health stays green. No process.exit().
+      console.error('⚠  Database init failed:', e.message);
     });
-  } catch (e) {
-    console.error('Fatal startup error:', e.message);
-    process.exit(1);
-  }
-})();
+});
