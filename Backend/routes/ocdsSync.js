@@ -5,22 +5,24 @@ const http   = require('http');
 const zlib   = require('zlib');
 const { pool } = require('../db');
 
-// ── Ensure log table exists — called at the start of every handler ────────────
-// Using CREATE TABLE IF NOT EXISTS inline in each route guarantees the table
-// is always present regardless of when the module loads or when DB connects.
-const ENSURE_TABLE = `
-  CREATE TABLE IF NOT EXISTS ocds_sync_log (
-    id          SERIAL PRIMARY KEY,
-    year        INTEGER,
-    status      VARCHAR(20)  DEFAULT 'pending',
-    records     INTEGER      DEFAULT 0,
-    error_msg   TEXT,
-    started_at  TIMESTAMPTZ  DEFAULT NOW(),
-    finished_at TIMESTAMPTZ
-  );
-`;
+// ── Helper: run a query with one auto-retry on timeout ────────────────────────
+// The ocds_sync_log table is created by initDB() on startup.
+// This helper retries once so transient "timeout exceeded" errors
+// on a cold pool don't kill the whole request.
+async function q(text, params) {
+  try {
+    return await pool.query(text, params);
+  } catch (e) {
+    if (e.message && e.message.includes('timeout')) {
+      // Wait 2 s then retry once
+      await new Promise(r => setTimeout(r, 2000));
+      return await pool.query(text, params);
+    }
+    throw e;
+  }
+}
 
-// ── All 47 county keyword maps ────────────────────────────────────────────────
+// ── 47-county keyword map ─────────────────────────────────────────────────────
 const COUNTY_MAP = {
   'Nairobi':          ['nairobi','city county','upper hill','westlands','kibera','langata','kasarani','embakasi'],
   'Mombasa':          ['mombasa','kilindini','mvita','likoni','changamwe'],
@@ -104,15 +106,12 @@ function scoreRisk(value, bid_type) {
   const flags = [];
   const methods = { single_source: 30, direct: 28, restricted: 15, emergency: 10, negotiated: 8, open: 0 };
   score += methods[bid_type] || 0;
-  if (bid_type === 'single_source' || bid_type === 'direct') {
-    flags.push('Single-source / direct award — no competitive bidding');
-  } else if (bid_type === 'restricted') {
-    flags.push('Restricted bidding process');
-  }
+  if (bid_type === 'single_source' || bid_type === 'direct') flags.push('Single-source / direct award — no competitive bidding');
+  else if (bid_type === 'restricted') flags.push('Restricted bidding process');
   const v = parseInt(value) || 0;
-  if (v >= 5000000000)  { score += 20; flags.push('Extremely high value — KES ' + (v/1e9).toFixed(1) + 'B'); }
-  else if (v >= 1000000000 && bid_type !== 'open') { score += 18; flags.push('KES ' + (v/1e9).toFixed(1) + 'B via non-open process'); }
-  else if (v >= 500000000 && (bid_type === 'single_source' || bid_type === 'direct')) { score += 22; flags.push('KES ' + (v/1e6).toFixed(0) + 'M single-source'); }
+  if      (v >= 5000000000)                                             { score += 20; flags.push('Extremely high value — KES ' + (v/1e9).toFixed(1) + 'B'); }
+  else if (v >= 1000000000 && bid_type !== 'open')                      { score += 18; flags.push('KES ' + (v/1e9).toFixed(1) + 'B via non-open process'); }
+  else if (v >= 500000000  && (bid_type === 'single_source' || bid_type === 'direct')) { score += 22; flags.push('KES ' + (v/1e6).toFixed(0) + 'M single-source'); }
   score = Math.min(Math.max(score, 0), 100);
   const risk_level = score >= 75 ? 'HIGH' : score >= 40 ? 'MEDIUM' : 'LOW';
   if (!flags.length) flags.push('No significant fraud indicators detected');
@@ -124,15 +123,12 @@ function parseOCDSRecord(record) {
     const ocid = (record.ocid || '').trim();
     if (!ocid) return null;
     const releases = Array.isArray(record.releases) ? record.releases : [record];
-    let description = '', supplier = '', value = 0, bid_type = 'open';
-    let awarded_date = null, procuring_entity = '';
+    let description = '', supplier = '', value = 0, bid_type = 'open', awarded_date = null, procuring_entity = '';
 
     for (const r of releases) {
       if (r.tender && !description) {
         description = (r.tender.title || r.tender.description || '').trim();
-        if (!procuring_entity) {
-          procuring_entity = ((r.buyer && r.buyer.name) || (r.tender.procuringEntity && r.tender.procuringEntity.name) || '').trim();
-        }
+        if (!procuring_entity) procuring_entity = ((r.buyer && r.buyer.name) || (r.tender.procuringEntity && r.tender.procuringEntity.name) || '').trim();
         const pm = (r.tender.procurementMethod || r.tender.procurementMethodDetails || '').toLowerCase();
         if      (pm.includes('single') || pm.includes('direct')) bid_type = 'single_source';
         else if (pm.includes('restrict'))                        bid_type = 'restricted';
@@ -160,16 +156,13 @@ function parseOCDSRecord(record) {
     }
 
     if (!description || description.length < 4) return null;
-    const county = inferCounty(description + ' ' + procuring_entity);
-    const sector = inferSector(description);
     const contract_id = ('OCDS-' + ocid.replace(/[^a-zA-Z0-9-]/g, '-')).slice(0, 100);
     const { score, risk_level, flags } = scoreRisk(value, bid_type);
-
     return {
       contract_id,
       description:      description.slice(0, 500),
-      county,
-      sector,
+      county:           inferCounty(description + ' ' + procuring_entity),
+      sector:           inferSector(description),
       value,
       supplier:         (supplier || 'Unknown Supplier').slice(0, 200),
       bid_type,
@@ -192,9 +185,8 @@ async function insertBatch(records) {
       try {
         await client.query(
           `INSERT INTO contracts
-             (contract_id, description, county, sector, value, supplier,
-              bid_type, awarded_date, risk_score, risk_level, flags,
-              procuring_entity, ocds_ocid, source)
+             (contract_id,description,county,sector,value,supplier,bid_type,
+              awarded_date,risk_score,risk_level,flags,procuring_entity,ocds_ocid,source)
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'ppip_ocds')
            ON CONFLICT (contract_id) DO UPDATE SET
              description = EXCLUDED.description,
@@ -215,7 +207,7 @@ async function insertBatch(records) {
 function fetchAndIngest(year, logId) {
   return new Promise((resolve, reject) => {
     const url = 'https://data.open-contracting.org/en/publication/147/download?name=' + year + '.jsonl.gz';
-    console.log('📥 OCDS ' + year + ': downloading from OCP registry...');
+    console.log('📥 OCDS ' + year + ': downloading...');
 
     function doGet(targetUrl, hops) {
       if (hops > 5) return reject(new Error('Too many redirects'));
@@ -229,99 +221,82 @@ function fetchAndIngest(year, logId) {
           res.resume();
           return reject(new Error('HTTP ' + res.statusCode + ' from OCP data registry'));
         }
-        streamParse(res, year, logId, resolve, reject);
+        const gunzip = zlib.createGunzip();
+        res.pipe(gunzip);
+        gunzip.setEncoding('utf8');
+
+        let buffer = '', inserted = 0, parsed = 0, errors = 0;
+        let batch = [], flushing = false;
+        const BATCH = 50;
+
+        async function flush() {
+          if (flushing || !batch.length) return;
+          flushing = true;
+          const rows = batch.splice(0);
+          try {
+            const n = await insertBatch(rows);
+            inserted += n;
+            q('UPDATE ocds_sync_log SET records=$1 WHERE id=$2', [inserted, logId]).catch(() => {});
+          } catch (_) {}
+          flushing = false;
+        }
+
+        gunzip.on('data', (chunk) => {
+          buffer += chunk;
+          const lines = buffer.split('\n');
+          buffer = lines.pop();
+          for (const line of lines) {
+            const l = line.trim(); if (!l) continue;
+            try {
+              const rec = parseOCDSRecord(JSON.parse(l));
+              if (rec) { batch.push(rec); parsed++; }
+            } catch (_) { errors++; }
+            if (batch.length >= BATCH) {
+              gunzip.pause();
+              flush().then(() => gunzip.resume()).catch(() => gunzip.resume());
+            }
+          }
+        });
+        gunzip.on('end', async () => {
+          if (buffer.trim()) {
+            try { const rec = parseOCDSRecord(JSON.parse(buffer.trim())); if (rec) batch.push(rec); } catch (_) {}
+          }
+          await flush();
+          console.log('✅ OCDS ' + year + ': ' + parsed + ' parsed, ' + inserted + ' inserted, ' + errors + ' errors');
+          resolve({ year, parsed, inserted, errors });
+        });
+        gunzip.on('error', reject);
       });
       req.on('error', reject);
-      req.on('timeout', () => { req.destroy(); reject(new Error('Download timeout — try again')); });
+      req.on('timeout', () => { req.destroy(); reject(new Error('Download timeout')); });
     }
     doGet(url, 0);
   });
-}
-
-function streamParse(res, year, logId, resolve, reject) {
-  const gunzip = zlib.createGunzip();
-  res.pipe(gunzip);
-  gunzip.setEncoding('utf8');
-
-  let buffer = '', inserted = 0, parsed = 0, errors = 0;
-  let batch = [], flushing = false;
-  const BATCH = 50;
-
-  async function flush() {
-    if (flushing || !batch.length) return;
-    flushing = true;
-    const rows = batch.splice(0);
-    try {
-      const n = await insertBatch(rows);
-      inserted += n;
-      pool.query('UPDATE ocds_sync_log SET records=$1 WHERE id=$2', [inserted, logId]).catch(() => {});
-    } catch (_) {}
-    flushing = false;
-  }
-
-  gunzip.on('data', (chunk) => {
-    buffer += chunk;
-    const lines = buffer.split('\n');
-    buffer = lines.pop();
-    for (const line of lines) {
-      const l = line.trim();
-      if (!l) continue;
-      try {
-        const rec = parseOCDSRecord(JSON.parse(l));
-        if (rec) { batch.push(rec); parsed++; }
-      } catch (_) { errors++; }
-      if (batch.length >= BATCH) {
-        gunzip.pause();
-        flush().then(() => gunzip.resume()).catch(() => gunzip.resume());
-      }
-    }
-  });
-
-  gunzip.on('end', async () => {
-    if (buffer.trim()) {
-      try { const rec = parseOCDSRecord(JSON.parse(buffer.trim())); if (rec) batch.push(rec); } catch (_) {}
-    }
-    await flush();
-    console.log('✅ OCDS ' + year + ': ' + parsed + ' parsed, ' + inserted + ' inserted, ' + errors + ' errors');
-    resolve({ year, parsed, inserted, errors });
-  });
-
-  gunzip.on('error', reject);
 }
 
 // ════════════════════════════════════════════════════════════════════════════
 // POST /api/sync/ocds
 // ════════════════════════════════════════════════════════════════════════════
 router.post('/ocds', async (req, res) => {
-  // Step 1: parse and validate year
   const year = parseInt((req.body && req.body.year) || new Date().getFullYear());
   if (!year || year < 2018 || year > new Date().getFullYear()) {
-    return res.status(400).json({
-      success: false,
-      error: 'Year must be between 2018 and ' + new Date().getFullYear(),
-    });
+    return res.status(400).json({ success: false, error: 'Year must be 2018–' + new Date().getFullYear() });
   }
 
-  // Step 2: ensure table exists (inline — no race condition)
-  try {
-    await pool.query(ENSURE_TABLE);
-  } catch (e) {
-    return res.status(500).json({ success: false, error: 'DB setup error: ' + e.message });
-  }
-
-  // Step 3: insert log row
+  // Insert log row — use retry helper so cold-pool timeout is handled
   let logId;
   try {
-    const { rows } = await pool.query(
+    const { rows } = await q(
       "INSERT INTO ocds_sync_log (year, status) VALUES ($1, 'running') RETURNING id",
       [year]
     );
     logId = rows[0].id;
   } catch (e) {
-    return res.status(500).json({ success: false, error: 'Log insert error: ' + e.message });
+    console.error('Sync log error:', e.message);
+    return res.status(500).json({ success: false, error: e.message });
   }
 
-  // Step 4: respond immediately — BEFORE starting any async work
+  // Respond immediately — BEFORE any async work starts
   res.json({
     success: true,
     message: 'OCDS sync started for year ' + year + '. Running in background — check Refresh Status in 3–5 minutes.',
@@ -329,22 +304,14 @@ router.post('/ocds', async (req, res) => {
     year,
   });
 
-  // Step 5: run sync fully detached via setImmediate so headers are never touched again
+  // Run sync fully detached — headers are already sent above
   setImmediate(() => {
     fetchAndIngest(year, logId)
-      .then((result) => {
-        return pool.query(
-          "UPDATE ocds_sync_log SET status='complete', records=$1, finished_at=NOW() WHERE id=$2",
-          [result.inserted, logId]
-        );
-      })
-      .then(() => { console.log('✅ Sync ' + year + ' complete'); })
+      .then((result) => q("UPDATE ocds_sync_log SET status='complete', records=$1, finished_at=NOW() WHERE id=$2", [result.inserted, logId]))
+      .then(() => console.log('✅ Sync ' + year + ' complete'))
       .catch((err) => {
         console.error('❌ Sync ' + year + ' failed:', err.message);
-        pool.query(
-          "UPDATE ocds_sync_log SET status='failed', error_msg=$1, finished_at=NOW() WHERE id=$2",
-          [err.message, logId]
-        ).catch(() => {});
+        q("UPDATE ocds_sync_log SET status='failed', error_msg=$1, finished_at=NOW() WHERE id=$2", [err.message, logId]).catch(() => {});
       });
   });
 });
@@ -353,16 +320,11 @@ router.post('/ocds', async (req, res) => {
 // GET /api/sync/status
 // ════════════════════════════════════════════════════════════════════════════
 router.get('/status', async (req, res) => {
-  // Always create table first — handles first-ever request with no prior syncs
-  try {
-    await pool.query(ENSURE_TABLE);
-  } catch (_) {}
-
   try {
     const [logsRes, countsRes, totalRes] = await Promise.all([
-      pool.query('SELECT * FROM ocds_sync_log ORDER BY started_at DESC LIMIT 10'),
-      pool.query('SELECT source, COUNT(*) AS count FROM contracts GROUP BY source ORDER BY count DESC'),
-      pool.query('SELECT COUNT(*) AS total FROM contracts'),
+      q('SELECT * FROM ocds_sync_log ORDER BY started_at DESC LIMIT 10'),
+      q('SELECT source, COUNT(*) AS count FROM contracts GROUP BY source ORDER BY count DESC'),
+      q('SELECT COUNT(*) AS total FROM contracts'),
     ]);
     return res.json({
       success: true,
@@ -382,17 +344,15 @@ router.get('/status', async (req, res) => {
 // ════════════════════════════════════════════════════════════════════════════
 router.get('/counties', async (req, res) => {
   try {
-    const { rows } = await pool.query(`
+    const { rows } = await q(`
       SELECT county,
         COUNT(*)                                                AS total,
         COUNT(*) FILTER (WHERE risk_level = 'HIGH')            AS high_risk,
         COUNT(*) FILTER (WHERE risk_level = 'MEDIUM')          AS medium_risk,
         AVG(risk_score)::INT                                    AS avg_score,
         COALESCE(SUM(value), 0)                                 AS total_value
-      FROM contracts
-      WHERE county IS NOT NULL
-      GROUP BY county
-      ORDER BY total DESC
+      FROM contracts WHERE county IS NOT NULL
+      GROUP BY county ORDER BY total DESC
     `);
     return res.json({ success: true, data: rows, total: rows.length });
   } catch (e) {
