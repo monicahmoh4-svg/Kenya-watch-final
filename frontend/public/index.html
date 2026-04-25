@@ -4,77 +4,112 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>KenyaWatch AI — Corruption Intelligence Platform</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
 html{scroll-behavior:smooth}
-body{font-family:'Inter',sans-serif;background:#f0f4f8;color:#1a2a35;min-height:100vh;overflow-x:hidden}
+body{font-family:'DM Sans',sans-serif;background:#f4f8ff;color:#0c1a42;min-height:100vh;overflow-x:hidden}
 :root{
-  --bg:#f0f4f8;--bg2:#ffffff;--bg3:#e8eef3;--card:#ffffff;
-  --border:#d1dce5;--border2:#b8ccda;
-  --green:#00a94f;--gd:#007a38;--gdim:rgba(0,169,79,.08);--gglow:rgba(0,169,79,.2);--gtext:#005f2c;
-  --red:#c0392b;--rdim:rgba(192,57,43,.07);
+  --bg:#f4f8ff;--bg2:#ffffff;--bg3:#e8f0fe;--card:#ffffff;
+  --border:#c5d5f5;--border2:#96b4ec;
+  --accent:#1a56db;--accentd:#1040b0;--accentdim:rgba(26,86,219,.07);--accentglow:rgba(26,86,219,.25);--accenttext:#0d2e8a;
+  --green:#059669;--gd:#047857;--gdim:rgba(5,150,105,.07);--gglow:rgba(5,150,105,.2);--gtext:#065f46;
+  --red:#dc2626;--rdim:rgba(220,38,38,.07);
   --amber:#d97706;--adim:rgba(217,119,6,.07);
-  --blue:#1d6fa4;--bdim:rgba(29,111,164,.07);
-  --navy:#0f2d45;--navyL:#1a3d56;
-  --text:#1a2a35;--t2:#4a6578;--t3:#8aacbe;
-  --s1:0 2px 12px rgba(0,0,0,.08);--s2:0 4px 24px rgba(0,0,0,.12);--s3:0 8px 40px rgba(0,0,0,.16);
+  --blue:#1a56db;--bdim:rgba(26,86,219,.07);
+  --navy:#0c1a42;--navyL:#16287a;
+  --text:#0c1a42;--t2:#374a80;--t3:#7b90c8;
+  --s1:0 2px 16px rgba(26,86,219,.09);--s2:0 6px 32px rgba(26,86,219,.14);--s3:0 12px 48px rgba(26,86,219,.2);
 }
 /* TOPBAR */
-.topbar{position:sticky;top:0;z-index:200;height:54px;background:var(--navy);
-  border-bottom:3px solid var(--green);display:flex;align-items:center;
-  justify-content:space-between;padding:0 28px;box-shadow:var(--s2)}
-.logo{display:flex;align-items:center;gap:11px;cursor:pointer;text-decoration:none}
-.logo-icon{width:34px;height:34px;background:var(--green);border-radius:9px;
-  display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.logo-icon svg{width:18px;height:18px;fill:#fff}
-.logo-name{font-family:'Syne',sans-serif;font-weight:800;font-size:18px;
-  letter-spacing:-.3px;color:#fff}
-.logo-name span{color:var(--green)}
-.logo-sub{font-family:'Space Mono',monospace;font-size:8px;color:rgba(255,255,255,.4);
-  letter-spacing:.15em;text-transform:uppercase;margin-top:1px}
+.topbar{position:sticky;top:0;z-index:200;height:58px;
+  background:#fff;
+  border-bottom:2px solid #dbeafe;
+  display:flex;align-items:center;justify-content:space-between;padding:0 32px;
+  box-shadow:0 2px 20px rgba(26,86,219,.1)}
+.logo{display:flex;align-items:center;gap:12px;cursor:pointer;text-decoration:none}
+.logo-icon{width:36px;height:36px;background:linear-gradient(135deg,#1a56db 0%,#1e40af 100%);
+  border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  box-shadow:0 4px 12px rgba(26,86,219,.35)}
+.logo-icon svg{width:19px;height:19px;fill:#fff}
+.logo-name{font-family:'Montserrat',sans-serif;font-weight:900;font-size:18px;
+  letter-spacing:-.5px;color:#0c1a42}
+.logo-name span{color:#1a56db}
+.logo-sub{font-family:'DM Mono',monospace;font-size:8px;color:#7b90c8;
+  letter-spacing:.14em;text-transform:uppercase;margin-top:1px}
 .topright{display:flex;align-items:center;gap:14px}
-.live-pill{display:flex;align-items:center;gap:5px;background:rgba(0,169,79,.18);
-  border:1px solid rgba(0,169,79,.35);border-radius:20px;padding:4px 11px;
-  font-family:'Space Mono',monospace;font-size:9px;color:#4ade80;letter-spacing:.08em}
-.live-dot{width:5px;height:5px;background:#4ade80;border-radius:50%;animation:pulse 1.8s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
-#clock-el{font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,.5)}
-#flag-count{font-family:'Space Mono',monospace;font-size:10px;color:#fca5a5;display:none}
+.live-pill{display:flex;align-items:center;gap:5px;background:#eff6ff;
+  border:1.5px solid #bfdbfe;border-radius:20px;padding:5px 12px;
+  font-family:'DM Mono',monospace;font-size:9px;color:#1a56db;letter-spacing:.08em;font-weight:500}
+.live-dot{width:5px;height:5px;background:#1a56db;border-radius:50%;animation:pulse 1.8s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+#clock-el{font-family:'DM Mono',monospace;font-size:10px;color:#7b90c8}
+#flag-count{font-family:'DM Mono',monospace;font-size:10px;color:#dc2626;display:none}
 
 /* HERO */
-.hero{position:relative;height:430px;overflow:hidden;background:var(--navy)}
-.hero-img{width:100%;height:100%;object-fit:cover;opacity:.55;filter:saturate(1.4) brightness(.75)}
+.hero{position:relative;height:500px;overflow:hidden;
+  background:linear-gradient(160deg,#0c1a42 0%,#1a3a8f 60%,#1e55c8 100%)}
+.hero-img{width:100%;height:100%;object-fit:cover;object-position:center 30%;
+  opacity:.28;filter:saturate(1.4) brightness(.75)}
+/* Multi-layer overlay for rich depth */
 .hero-overlay{position:absolute;inset:0;
-  background:linear-gradient(135deg,rgba(10,28,48,.96) 0%,rgba(10,28,48,.82) 45%,rgba(0,90,40,.55) 100%)}
+  background:
+    linear-gradient(160deg,rgba(12,26,66,.96) 0%,rgba(20,56,160,.82) 50%,rgba(26,86,219,.65) 100%)}
+.hero-overlay::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 70% 70% at 65% 45%,rgba(96,165,250,.15) 0%,transparent 65%)}
+.hero-overlay::after{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 40% 30% at 15% 75%,rgba(30,86,220,.25) 0%,transparent 55%)}
+/* Animated shimmer line across top */
+.hero::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;z-index:2;
+  background:linear-gradient(90deg,transparent,#60a5fa,#93c5fd,#60a5fa,transparent);
+  animation:shimmer 3s infinite}
+@keyframes shimmer{0%{opacity:.6}50%{opacity:1}100%{opacity:.6}}
 .hero-content{position:absolute;inset:0;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;text-align:center;padding:0 28px}
-.hero-pill{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.2em;
-  text-transform:uppercase;color:var(--green);background:rgba(0,169,79,.1);
-  border:1px solid rgba(0,169,79,.28);padding:6px 15px;border-radius:20px;margin-bottom:18px}
-.hero-h1{font-family:'Syne',sans-serif;font-size:clamp(26px,4.5vw,50px);font-weight:900;
-  color:#fff;line-height:1.1;letter-spacing:-1px;margin-bottom:14px;max-width:820px}
-.hero-h1 span{color:var(--green)}
-.hero-p{font-size:clamp(13px,1.8vw,16px);color:rgba(255,255,255,.68);max-width:580px;
-  line-height:1.75;margin-bottom:30px}
-.hero-stats{display:flex;gap:36px;flex-wrap:wrap;justify-content:center}
-.hs{text-align:center}
-.hs-n{font-family:'Syne',sans-serif;font-size:30px;font-weight:800;color:var(--green);line-height:1}
-.hs-l{font-family:'Space Mono',monospace;font-size:9px;color:rgba(255,255,255,.45);
-  letter-spacing:.1em;text-transform:uppercase;margin-top:5px}
-.hero-fade{position:absolute;bottom:0;left:0;right:0;height:64px;
-  background:linear-gradient(transparent,var(--bg))}
+  align-items:center;justify-content:center;text-align:center;padding:0 32px;z-index:1}
+/* Kenya flag accent strip */
+.hero-pill{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.2em;
+  text-transform:uppercase;color:#93c5fd;
+  background:rgba(96,165,250,.1);
+  border:1px solid rgba(147,197,253,.3);
+  padding:8px 18px;border-radius:24px;margin-bottom:22px;
+  display:inline-flex;align-items:center;gap:8px}
+.hero-h1{font-family:'Montserrat',sans-serif;font-size:clamp(30px,4.8vw,58px);font-weight:900;
+  color:#ffffff;line-height:1.06;letter-spacing:-1.8px;margin-bottom:18px;max-width:880px;
+  text-shadow:0 4px 32px rgba(0,0,0,.5)}
+.hero-h1 span{
+  color:transparent;
+  background:linear-gradient(90deg,#60a5fa 0%,#93c5fd 50%,#bfdbfe 100%);
+  -webkit-background-clip:text;background-clip:text}
+.hero-p{font-size:clamp(13.5px,1.8vw,17px);color:rgba(219,234,254,.82);max-width:620px;
+  line-height:1.85;margin-bottom:36px;text-shadow:0 1px 8px rgba(0,0,0,.3);font-weight:300}
+.hero-p strong{color:#fff;font-weight:600}
+/* Stat cards row */
+.hero-stats{display:flex;gap:16px;flex-wrap:wrap;justify-content:center}
+.hs{text-align:center;padding:16px 22px;
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(147,197,253,.18);
+  border-radius:14px;backdrop-filter:blur(12px);min-width:110px;
+  transition:transform .2s,background .2s}
+.hs:hover{transform:translateY(-3px);background:rgba(255,255,255,.12)}
+.hs-n{font-family:'Montserrat',sans-serif;font-size:30px;font-weight:900;
+  color:#93c5fd;line-height:1;
+  text-shadow:0 0 20px rgba(147,197,253,.4)}
+.hs-l{font-family:'DM Mono',monospace;font-size:9px;color:rgba(191,219,254,.6);
+  letter-spacing:.1em;text-transform:uppercase;margin-top:7px}
+.hero-fade{position:absolute;bottom:0;left:0;right:0;height:80px;
+  background:linear-gradient(transparent,#f4f8ff)}
 
 /* NAV */
-nav{background:var(--navyL);display:flex;padding:0 24px;overflow-x:auto;
-  scrollbar-width:none;border-bottom:1px solid rgba(255,255,255,.07);box-shadow:0 2px 8px rgba(0,0,0,.1)}
+nav{background:#fff;display:flex;padding:0 24px;overflow-x:auto;
+  scrollbar-width:none;border-bottom:2px solid #dbeafe;
+  box-shadow:0 2px 10px rgba(26,86,219,.07)}
 nav::-webkit-scrollbar{display:none}
-.nb{font-family:'Space Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.1em;
-  text-transform:uppercase;color:rgba(255,255,255,.45);background:none;border:none;
-  padding:13px 16px;cursor:pointer;border-bottom:3px solid transparent;
+.nb{font-family:'DM Mono',monospace;font-size:9px;font-weight:500;letter-spacing:.1em;
+  text-transform:uppercase;color:#7b90c8;background:none;border:none;
+  padding:15px 17px;cursor:pointer;border-bottom:3px solid transparent;
   transition:all .2s;white-space:nowrap;position:relative}
-.nb:hover{color:rgba(255,255,255,.82)}
-.nb.active{color:#fff;border-bottom-color:var(--green);background:rgba(0,169,79,.07)}
+.nb:hover{color:#1a56db;background:#eff6ff}
+.nb.active{color:#1a56db;border-bottom-color:#1a56db;background:#eff6ff;font-weight:700}
 .nb-dot{width:5px;height:5px;background:var(--red);border-radius:50%;
   position:absolute;top:10px;right:9px;animation:pulse 2s infinite;display:none}
 
@@ -86,10 +121,10 @@ nav::-webkit-scrollbar{display:none}
 /* SECTION HEADER */
 .sh{display:flex;align-items:flex-end;justify-content:space-between;
   margin-bottom:26px;flex-wrap:wrap;gap:12px}
-.sh-t{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;
-  letter-spacing:-.4px;color:var(--navy);line-height:1.1}
+.sh-t{font-family:'Montserrat',sans-serif;font-size:24px;font-weight:800;
+  letter-spacing:-.4px;color:#0a1f5c;line-height:1.1}
 .sh-s{color:var(--t2);font-size:13px;margin-top:4px}
-.tag{font-family:'Space Mono',monospace;font-size:9px;font-weight:700;
+.tag{font-family:'DM Mono',monospace;font-size:9px;font-weight:700;
   letter-spacing:.09em;text-transform:uppercase;padding:5px 12px;border-radius:5px;border:1px solid}
 .tg{color:var(--gtext);border-color:rgba(0,169,79,.28);background:var(--gdim)}
 .tr{color:var(--red);border-color:rgba(192,57,43,.25);background:var(--rdim)}
@@ -105,9 +140,9 @@ nav::-webkit-scrollbar{display:none}
 .sc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:13px 13px 0 0}
 .sc.cr::before{background:var(--red)}.sc.ca::before{background:var(--amber)}
 .sc.cg::before{background:var(--green)}.sc.cb::before{background:var(--blue)}
-.sl{font-family:'Space Mono',monospace;font-size:9px;color:var(--t3);
+.sl{font-family:'DM Mono',monospace;font-size:9px;color:var(--t3);
   letter-spacing:.12em;text-transform:uppercase;margin-bottom:11px}
-.sv{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;letter-spacing:-1px;line-height:1}
+.sv{font-family:'Montserrat',sans-serif;font-size:32px;font-weight:800;letter-spacing:-1px;line-height:1}
 .sv.r{color:var(--red)}.sv.a{color:var(--amber)}.sv.g{color:var(--green)}.sv.b{color:var(--blue)}
 .sd{font-size:11px;color:var(--t3);margin-top:7px}
 
@@ -120,14 +155,14 @@ nav::-webkit-scrollbar{display:none}
 /* CARDS */
 .card{background:var(--card);border:1px solid var(--border);border-radius:13px;
   padding:22px;box-shadow:var(--s1);transition:all .2s}
-.card:hover{border-color:var(--border2);box-shadow:var(--s2)}
-.ch{font-family:'Space Mono',monospace;font-size:10px;font-weight:700;
+.card:hover{border-color:rgba(21,88,214,.35);box-shadow:var(--s2)}
+.ch{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;
   color:var(--t2);letter-spacing:.1em;text-transform:uppercase;
   margin-bottom:17px;display:flex;align-items:center;gap:8px}
 .ch-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 
 /* INTEL SOURCE LABEL */
-.isrc{font-family:'Space Mono',monospace;font-size:8px;color:var(--t3);
+.isrc{font-family:'DM Mono',monospace;font-size:8px;color:var(--t3);
   letter-spacing:.1em;text-transform:uppercase;background:var(--bg3);
   border:1px solid var(--border);border-radius:4px;padding:4px 9px;
   display:inline-block;margin-bottom:13px}
@@ -139,8 +174,8 @@ nav::-webkit-scrollbar{display:none}
 .btrack{flex:1;background:var(--bg3);border-radius:3px;height:7px;
   overflow:hidden;border:1px solid var(--border)}
 .bfill{height:100%;border-radius:3px;transition:width 1.3s cubic-bezier(.4,0,.2,1)}
-.bscore{width:25px;text-align:right;font-family:'Space Mono',monospace;font-size:10px;color:var(--t2)}
-.blh{width:60px;text-align:right;font-size:9px;font-family:'Space Mono',monospace;font-weight:700}
+.bscore{width:25px;text-align:right;font-family:'DM Mono',monospace;font-size:10px;color:var(--t2)}
+.blh{width:60px;text-align:right;font-size:9px;font-family:'DM Mono',monospace;font-weight:700}
 .lvh{color:var(--red)}.lh2{color:var(--amber)}.lm{color:var(--green)}
 
 /* SECTOR ITEMS */
@@ -149,7 +184,7 @@ nav::-webkit-scrollbar{display:none}
 .si-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
 .si-name{font-size:12.5px;font-weight:600;color:var(--text)}
 .si-badges{display:flex;gap:5px;align-items:center}
-.fb2{font-family:'Space Mono',monospace;font-size:8px;padding:2px 6px;border-radius:3px;font-weight:700}
+.fb2{font-family:'DM Mono',monospace;font-size:8px;padding:2px 6px;border-radius:3px;font-weight:700}
 .fvh{background:rgba(192,57,43,.1);color:var(--red);border:1px solid rgba(192,57,43,.2)}
 .fh{background:rgba(217,119,6,.1);color:var(--amber);border:1px solid rgba(217,119,6,.2)}
 .fm2{background:rgba(29,111,164,.08);color:var(--blue);border:1px solid rgba(29,111,164,.18)}
@@ -168,24 +203,24 @@ nav::-webkit-scrollbar{display:none}
 .prdesc{font-size:11px;color:var(--t2);line-height:1.5}
 
 /* INSIGHT BOX */
-.ibox{background:linear-gradient(135deg,rgba(0,169,79,.05),rgba(29,111,164,.03));
-  border:1px solid rgba(0,169,79,.18);border-left:3px solid var(--green);
+.ibox{background:linear-gradient(135deg,rgba(21,88,214,.05),rgba(21,88,214,.02));
+  border:1px solid rgba(21,88,214,.18);border-left:3px solid #1558d6;
   border-radius:0 8px 8px 0;padding:10px 14px;margin-top:13px;
   font-size:11.5px;color:var(--t2);line-height:1.7}
-.ibox strong{color:var(--navy)}
+.ibox strong{color:#0a1f5c}
 
 /* TABLE */
 .tw{overflow-x:auto}
 .tbl{width:100%;border-collapse:collapse;min-width:560px}
-.tbl th{font-family:'Space Mono',monospace;font-size:9px;color:var(--t2);
+.tbl th{font-family:'DM Mono',monospace;font-size:9px;color:var(--t2);
   letter-spacing:.09em;text-transform:uppercase;text-align:left;
   padding:10px 13px;border-bottom:2px solid var(--border);background:var(--bg3)}
 .tbl td{padding:11px 13px;border-bottom:1px solid var(--border);font-size:12.5px;vertical-align:middle}
 .tbl tr:last-child td{border-bottom:none}
-.tbl tbody tr:hover td{background:rgba(0,169,79,.025)}
+.tbl tbody tr:hover td{background:rgba(21,88,214,.04)}
 
 /* BADGES */
-.badge{font-family:'Space Mono',monospace;font-size:9px;font-weight:700;
+.badge{font-family:'DM Mono',monospace;font-size:9px;font-weight:700;
   padding:3px 9px;border-radius:4px;letter-spacing:.04em;white-space:nowrap}
 .bh2{background:rgba(192,57,43,.08);color:var(--red);border:1px solid rgba(192,57,43,.2)}
 .bm2{background:rgba(217,119,6,.08);color:var(--amber);border:1px solid rgba(217,119,6,.2)}
@@ -194,13 +229,13 @@ nav::-webkit-scrollbar{display:none}
 .bn2{background:var(--bg3);color:var(--t2);border:1px solid var(--border)}
 
 /* BUTTONS */
-.btn{font-family:'Space Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.06em;
+.btn{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.06em;
   text-transform:uppercase;padding:10px 18px;border:none;border-radius:8px;
   cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:7px}
 .btn-g{background:var(--green);color:#fff}
 .btn-g:hover{background:var(--gd);transform:translateY(-1px);box-shadow:0 4px 16px var(--gglow)}
-.btn-o{background:transparent;color:var(--green);border:1.5px solid rgba(0,169,79,.32)}
-.btn-o:hover{background:var(--gdim);border-color:var(--green)}
+.btn-o{background:transparent;color:#1558d6;border:1.5px solid rgba(21,88,214,.32)}
+.btn-o:hover{background:var(--accentdim);border-color:#1558d6}
 .btn-n{background:var(--navy);color:#fff}.btn-n:hover{background:var(--navyL)}
 .btn-r{background:var(--red);color:#fff}.btn-r:hover{opacity:.88}
 .btn-sm{padding:7px 12px;font-size:9px}
@@ -208,12 +243,12 @@ nav::-webkit-scrollbar{display:none}
 
 /* FORMS */
 .fg{margin-bottom:13px}
-.fl3{font-family:'Space Mono',monospace;font-size:9px;color:var(--t2);
+.fl3{font-family:'DM Mono',monospace;font-size:9px;color:var(--t2);
   letter-spacing:.09em;text-transform:uppercase;margin-bottom:6px;display:block;font-weight:700}
 .fi,.fsel,.fta{width:100%;background:#fff;border:1.5px solid var(--border);border-radius:8px;
-  color:var(--text);font-family:'Inter',sans-serif;font-size:13px;padding:10px 12px;
+  color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:10px 12px;
   outline:none;transition:all .2s}
-.fi:focus,.fsel:focus,.fta:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(0,169,79,.1)}
+.fi:focus,.fsel:focus,.fta:focus{border-color:#1558d6;box-shadow:0 0 0 3px rgba(21,88,214,.12)}
 .fi::placeholder,.fta::placeholder{color:var(--t3)}
 .fta{height:95px;resize:vertical}
 
@@ -223,10 +258,10 @@ nav::-webkit-scrollbar{display:none}
 .fi-ic{width:33px;height:33px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
 .ic-r{background:rgba(192,57,43,.1)}.ic-g{background:rgba(0,169,79,.08)}.ic-b{background:var(--bdim)}
 .fi-t{font-size:13px;font-weight:600;margin-bottom:3px;color:var(--text)}
-.fi-m{font-family:'Space Mono',monospace;font-size:10px;color:var(--t3)}
+.fi-m{font-family:'DM Mono',monospace;font-size:10px;color:var(--t3)}
 
 /* MODAL */
-.mo{position:fixed;inset:0;background:rgba(15,45,69,.7);backdrop-filter:blur(6px);
+.mo{position:fixed;inset:0;background:rgba(10,31,92,.75);backdrop-filter:blur(8px);
   z-index:300;display:none;align-items:center;justify-content:center;padding:20px}
 .mo.show{display:flex}
 .md{background:#fff;border:1px solid var(--border);border-radius:16px;
@@ -234,7 +269,7 @@ nav::-webkit-scrollbar{display:none}
   box-shadow:var(--s3);animation:si .3s cubic-bezier(.34,1.56,.64,1)}
 @keyframes si{from{transform:translateY(18px) scale(.96);opacity:0}to{transform:none;opacity:1}}
 .mh{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
-.mt2{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--navy)}
+.mt2{font-family:'Montserrat',sans-serif;font-size:20px;font-weight:800;color:var(--navy)}
 .mc{background:none;border:none;color:var(--t3);font-size:18px;cursor:pointer;
   padding:4px;border-radius:5px;transition:all .15s}
 .mc:hover{background:var(--bg3);color:var(--text)}
@@ -269,7 +304,7 @@ nav::-webkit-scrollbar{display:none}
 @keyframes aib{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
 .cfoot{display:flex;gap:8px;padding:12px;border-top:1px solid var(--border)}
 .cinp{flex:1;background:#fff;border:1.5px solid var(--border);border-radius:9px;
-  color:var(--text);font-family:'Inter',sans-serif;font-size:13px;padding:10px 13px;outline:none;transition:all .2s}
+  color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:10px 13px;outline:none;transition:all .2s}
 .cinp:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(0,169,79,.1)}
 .cinp::placeholder{color:var(--t3)}
 
@@ -280,34 +315,34 @@ nav::-webkit-scrollbar{display:none}
 .gpi{height:96px;display:flex;align-items:center;justify-content:center;position:relative}
 .gpb{padding:15px}
 .gpn{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:4px}
-.gpm{font-family:'Space Mono',monospace;font-size:9px;color:var(--t3);margin-bottom:10px}
+.gpm{font-family:'DM Mono',monospace;font-size:9px;color:var(--t3);margin-bottom:10px}
 
 /* CHATBOT */
 #kw-trig{position:fixed;bottom:24px;right:24px;width:56px;height:56px;
-  background:var(--green);border-radius:50%;border:none;cursor:pointer;
+  background:linear-gradient(135deg,#0a1f5c,#1558d6);border-radius:50%;border:none;cursor:pointer;
   display:flex;align-items:center;justify-content:center;
-  box-shadow:0 4px 20px rgba(0,169,79,.38);z-index:9999;transition:all .2s}
-#kw-trig:hover{background:var(--gd);transform:scale(1.1);box-shadow:0 6px 28px rgba(0,169,79,.5)}
+  box-shadow:0 4px 20px rgba(21,88,214,.45);z-index:9999;transition:all .2s}
+#kw-trig:hover{background:linear-gradient(135deg,#1558d6,#2563eb);transform:scale(1.1);box-shadow:0 6px 30px rgba(21,88,214,.6)}
 #kw-trig svg{width:24px;height:24px;fill:#fff}
 #kw-badge{position:absolute;top:-3px;right:-3px;background:var(--red);color:#fff;
   border-radius:50%;width:17px;height:17px;font-size:9px;font-weight:700;
-  display:none;align-items:center;justify-content:center;font-family:'Space Mono',monospace;border:2px solid #fff}
+  display:none;align-items:center;justify-content:center;font-family:'DM Mono',monospace;border:2px solid #fff}
 #kw-win{position:fixed;bottom:90px;right:24px;width:360px;height:515px;
   background:#fff;border:1px solid var(--border2);border-radius:16px;
   display:flex;flex-direction:column;z-index:9998;
   transform:scale(.88) translateY(20px);opacity:0;pointer-events:none;
   transition:transform .28s cubic-bezier(.34,1.56,.64,1),opacity .22s;box-shadow:var(--s3)}
 #kw-win.open{transform:scale(1) translateY(0);opacity:1;pointer-events:all}
-#kw-hdr{background:linear-gradient(135deg,var(--navy),var(--navyL));border-radius:16px 16px 0 0;
+#kw-hdr{background:linear-gradient(135deg,#0a1f5c 0%,#1558d6 100%);border-radius:16px 16px 0 0;
   padding:13px 15px;display:flex;align-items:center;justify-content:space-between;
-  border-bottom:3px solid var(--green);flex-shrink:0}
+  border-bottom:3px solid #7dd3fc;flex-shrink:0}
 .khl{display:flex;align-items:center;gap:9px}
 .kav{width:34px;height:34px;background:var(--green);border-radius:50%;display:flex;
   align-items:center;justify-content:center;font-weight:800;font-size:11px;color:#fff;position:relative}
 .kon{position:absolute;bottom:0;right:0;width:9px;height:9px;background:#4ade80;
   border-radius:50%;border:2px solid var(--navy)}
-.kti{font-weight:700;font-size:13px;color:#fff;font-family:'Syne',sans-serif}
-.ksu{font-size:9px;color:rgba(255,255,255,.5);font-family:'Space Mono',monospace;margin-top:1px}
+.kti{font-weight:700;font-size:13px;color:#fff;font-family:'Montserrat',sans-serif}
+.ksu{font-size:9px;color:rgba(255,255,255,.5);font-family:'DM Mono',monospace;margin-top:1px}
 .kacts{display:flex;gap:4px}
 .kbtn{background:rgba(255,255,255,.1);border:none;color:rgba(255,255,255,.65);
   width:27px;height:27px;border-radius:7px;cursor:pointer;font-size:13px;
@@ -318,7 +353,7 @@ nav::-webkit-scrollbar{display:none}
 #kw-qr::-webkit-scrollbar{display:none}
 .kq{white-space:nowrap;background:#fff;border:1px solid var(--border2);color:var(--navy);
   font-size:9px;padding:5px 10px;border-radius:11px;cursor:pointer;transition:all .15s;
-  flex-shrink:0;font-family:'Space Mono',monospace;font-weight:700}
+  flex-shrink:0;font-family:'DM Mono',monospace;font-weight:700}
 .kq:hover{background:var(--gdim);border-color:var(--green);color:var(--gtext)}
 #kw-msgs{flex:1;overflow-y:auto;padding:11px;display:flex;flex-direction:column;gap:8px}
 #kw-msgs::-webkit-scrollbar{width:3px}
@@ -339,28 +374,29 @@ nav::-webkit-scrollbar{display:none}
 .kd:nth-child(2){animation-delay:.2s}.kd:nth-child(3){animation-delay:.4s}
 #kw-foot{padding:9px 11px;border-top:1px solid var(--border);display:flex;gap:7px;flex-shrink:0;background:var(--bg3)}
 #kw-inp{flex:1;background:#fff;border:1.5px solid var(--border);border-radius:8px;
-  color:var(--text);font-family:'Inter',sans-serif;font-size:12.5px;padding:8px 11px;
+  color:var(--text);font-family:'DM Sans',sans-serif;font-size:12.5px;padding:8px 11px;
   outline:none;transition:all .2s;resize:none;height:34px}
 #kw-inp:focus{border-color:var(--green)}
 #kw-inp::placeholder{color:var(--t3)}
-#kw-send{width:34px;height:34px;background:var(--green);border:none;border-radius:8px;
+#kw-send{width:34px;height:34px;background:#1558d6;border:none;border-radius:8px;
   cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .18s}
-#kw-send:hover{background:var(--gd);transform:scale(1.07)}
+#kw-send:hover{background:#0d3fa8;transform:scale(1.07)}
 #kw-send:disabled{background:var(--border);cursor:not-allowed;transform:none}
 #kw-send svg{width:14px;height:14px;fill:#fff}
 #kw-pwr{text-align:center;padding:5px;font-size:8px;color:var(--t3);
-  border-top:1px solid var(--border);flex-shrink:0;font-family:'Space Mono',monospace;letter-spacing:.05em}
+  border-top:1px solid var(--border);flex-shrink:0;font-family:'DM Mono',monospace;letter-spacing:.05em}
 
 /* SYNC PANEL */
-.sync-hero{background:linear-gradient(135deg,var(--navy),var(--navyL));
-  border-radius:13px;padding:24px;color:#fff;margin-bottom:20px;box-shadow:var(--s2)}
-.sync-h{font-family:'Syne',sans-serif;font-size:19px;font-weight:800;margin-bottom:4px}
+.sync-hero{background:linear-gradient(135deg,#0a1f5c 0%,#1558d6 100%);
+  border-radius:13px;padding:24px;color:#fff;margin-bottom:20px;
+  box-shadow:0 6px 28px rgba(21,88,214,.35)}
+.sync-h{font-family:'Montserrat',sans-serif;font-size:19px;font-weight:800;margin-bottom:4px}
 .sync-s{font-size:12.5px;color:rgba(255,255,255,.58);margin-bottom:18px;line-height:1.65}
 
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
 @media(max-width:600px){
-  .hero{height:330px}.hero-h1{font-size:24px}.hero-stats{gap:20px}.hs-n{font-size:24px}
+  .hero{height:370px}.hero-h1{font-size:26px;letter-spacing:-1px}.hero-stats{gap:10px}.hs-n{font-size:24px}
   #kw-win{width:calc(100vw - 12px);right:6px;bottom:80px;height:72vh}
   .view{padding:18px 14px}nav{padding:0 14px}
 }
@@ -389,15 +425,21 @@ nav::-webkit-scrollbar{display:none}
 <!-- HERO -->
 <div class="hero">
   <img class="hero-img"
-    src="https://images.unsplash.com/photo-1596526570897-4e6f18f2b2cb?w=1600&q=85&auto=format&fit=crop"
-    alt="Nairobi Kenya Parliament Buildings"
-    onerror="this.src='https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?w=1600&q=85&auto=format&fit=crop'"
+    src="https://images.unsplash.com/photo-1570168007204-dfb528c6958f?w=1920&q=90&auto=format&fit=crop&crop=center"
+    alt="Nairobi Kenya modern skyline"
+    onerror="this.src='https://images.unsplash.com/photo-1529516548873-9ce57c8f155e?w=1920&q=90&auto=format&fit=crop&crop=center'"
     loading="eager">
   <div class="hero-overlay"></div>
   <div class="hero-content">
-    <div class="hero-pill">🇰🇪 Kenya · Real-Time Corruption Intelligence</div>
-    <h1 class="hero-h1">Fighting Corruption<br>Across <span>All 47 Counties.</span></h1>
-    <p class="hero-p">Real-time AI analysis of government procurement contracts from Kenya's official PPIP portal. Anonymous citizen reporting. Satellite ghost project detection. <strong style="color:rgba(255,255,255,.9)">105,738+ real contracts.</strong> Updated daily.</p>
+    <div class="hero-pill">
+      🇰🇪 Kenya &nbsp;·&nbsp; Real-Time Corruption Intelligence &nbsp;·&nbsp; All 47 Counties
+    </div>
+    <h1 class="hero-h1">Exposing Corruption.<br><span>Protecting Kenya.</span></h1>
+    <p class="hero-p">
+      Live AI analysis of government procurement contracts from the official PPRA portal.
+      Anonymous citizen reporting. Satellite ghost project detection.
+      <strong>105,738+ real contracts</strong> — updated daily.
+    </p>
     <div class="hero-stats">
       <div class="hs"><div class="hs-n" id="hs1">--</div><div class="hs-l">Contracts Flagged</div></div>
       <div class="hs"><div class="hs-n" id="hs2">--</div><div class="hs-l">Ghost Projects</div></div>
@@ -509,9 +551,9 @@ nav::-webkit-scrollbar{display:none}
   <div class="card">
     <div class="ch">🛰 Detection Pipeline</div>
     <div class="g3">
-      <div style="text-align:center;padding:14px 8px"><div style="font-size:28px;margin-bottom:10px">🛰️</div><div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--green);margin-bottom:6px;letter-spacing:.1em;font-weight:700">STEP 1 · INGEST</div><div style="font-size:12.5px;color:var(--t2);line-height:1.65">Sentinel-2 satellite imagery fetched for every funded project GPS coordinate, refreshed every 30 days</div></div>
-      <div style="text-align:center;padding:14px 8px;border-left:1px solid var(--border);border-right:1px solid var(--border)"><div style="font-size:28px;margin-bottom:10px">🧠</div><div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--amber);margin-bottom:6px;letter-spacing:.1em;font-weight:700">STEP 2 · ANALYSE</div><div style="font-size:12.5px;color:var(--t2);line-height:1.65">AI vision model classifies ground vs. contract claims: Built / Partial / Ghost</div></div>
-      <div style="text-align:center;padding:14px 8px"><div style="font-size:28px;margin-bottom:10px">🚨</div><div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--red);margin-bottom:6px;letter-spacing:.1em;font-weight:700">STEP 3 · ESCALATE</div><div style="font-size:12.5px;color:var(--t2);line-height:1.65">Discrepancies auto-escalated to EACC, county assembly and investigative journalists</div></div>
+      <div style="text-align:center;padding:14px 8px"><div style="font-size:28px;margin-bottom:10px">🛰️</div><div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--green);margin-bottom:6px;letter-spacing:.1em;font-weight:700">STEP 1 · INGEST</div><div style="font-size:12.5px;color:var(--t2);line-height:1.65">Sentinel-2 satellite imagery fetched for every funded project GPS coordinate, refreshed every 30 days</div></div>
+      <div style="text-align:center;padding:14px 8px;border-left:1px solid var(--border);border-right:1px solid var(--border)"><div style="font-size:28px;margin-bottom:10px">🧠</div><div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--amber);margin-bottom:6px;letter-spacing:.1em;font-weight:700">STEP 2 · ANALYSE</div><div style="font-size:12.5px;color:var(--t2);line-height:1.65">AI vision model classifies ground vs. contract claims: Built / Partial / Ghost</div></div>
+      <div style="text-align:center;padding:14px 8px"><div style="font-size:28px;margin-bottom:10px">🚨</div><div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--red);margin-bottom:6px;letter-spacing:.1em;font-weight:700">STEP 3 · ESCALATE</div><div style="font-size:12.5px;color:var(--t2);line-height:1.65">Discrepancies auto-escalated to EACC, county assembly and investigative journalists</div></div>
     </div>
   </div>
 </div>
@@ -656,7 +698,7 @@ nav::-webkit-scrollbar{display:none}
     <div class="sync-s">The Public Procurement Regulatory Authority publishes all Kenya government contracts from all 47 counties in Open Contracting Data Standard (OCDS) format. This imports real contracts covering 105,738+ awards from Jul 2018 to present.</div>
     <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
       <div>
-        <label style="font-family:'Space Mono',monospace;font-size:9px;color:rgba(255,255,255,.55);letter-spacing:.1em;display:block;margin-bottom:7px">SELECT YEAR</label>
+        <label style="font-family:'DM Mono',monospace;font-size:9px;color:rgba(255,255,255,.55);letter-spacing:.1em;display:block;margin-bottom:7px">SELECT YEAR</label>
         <select class="fsel" id="sync-year" style="background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.2);color:#fff;width:120px">
           <option value="2026">2026</option><option value="2025" selected>2025</option>
           <option value="2024">2024</option><option value="2023">2023</option><option value="2022">2022</option>
@@ -704,7 +746,7 @@ nav::-webkit-scrollbar{display:none}
     <div style="display:flex;align-items:center;gap:20px;padding:6px 0">
       <div style="width:52px;height:52px;background:var(--gdim);border:2px solid rgba(0,169,79,.2);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px">🧑‍💻</div>
       <div>
-        <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--navy)">Douglas Mwebi (Daggy)</div>
+        <div style="font-family:'Montserrat',sans-serif;font-size:20px;font-weight:800;color:var(--navy)">Douglas Mwebi (Daggy)</div>
         <div style="color:var(--t2);font-size:12.5px;margin-top:3px">Daggy Techs · Kisii, Kenya</div>
         <div style="display:flex;gap:8px;margin-top:9px;flex-wrap:wrap">
           <span class="badge bl2">daggytechs@gmail.com</span>
@@ -835,7 +877,7 @@ function renderSectors(){
   SD.map((s,i)=>`<div class="si">
     <div class="si-top">
       <div class="si-name">${i+1}. ${s.n}</div>
-      <div class="si-badges"><span class="fb2 ${fc(s.f)}">${s.f}</span><span style="font-family:'Space Mono',monospace;font-size:9px;color:var(--t2)">${s.s}</span></div>
+      <div class="si-badges"><span class="fb2 ${fc(s.f)}">${s.f}</span><span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--t2)">${s.s}</span></div>
     </div>
     <div class="sibar"><div class="sibfill" style="width:0%;background:${bc(s.s)}" data-w="${(s.s/95*100).toFixed(0)}%"></div></div>
     <div class="sidesc">${s.d}</div>
@@ -849,7 +891,7 @@ function renderRisk(){
   const total=PD.reduce((a,r)=>a+r.p,0);
   el.innerHTML='<div class="isrc">EACC PROCUREMENT ANALYSIS · SHARE OF CORRUPTION LOSSES</div>'+
   PD.map(r=>`<div class="pr">
-    <div class="pr-top"><span class="pr-name">${r.n}</span><span style="font-family:'Space Mono',monospace;font-size:10px;font-weight:700;color:${r.r==='HIGH'?'var(--red)':'var(--amber)'}">${r.p}%</span></div>
+    <div class="pr-top"><span class="pr-name">${r.n}</span><span style="font-family:'DM Mono',monospace;font-size:10px;font-weight:700;color:${r.r==='HIGH'?'var(--red)':'var(--amber)'}">${r.p}%</span></div>
     <div class="prbar"><div class="prfill" style="width:0%;background:${r.r==='HIGH'?'#c0392b':'#d97706'}" data-w="${(r.p/total*100).toFixed(0)}%"></div></div>
     <div class="prdesc">${r.d}</div>
   </div>`).join('')+
@@ -929,7 +971,7 @@ async function loadDash(){
     if(h._net||(!h.status&&!h.database)){
       el.innerHTML=`<div style="display:flex;flex-direction:column;gap:9px">
         <div style="display:flex;justify-content:space-between;font-size:13px"><span>Backend</span><span class="badge bh2">UNREACHABLE</span></div>
-        <div style="font-size:11px;color:var(--red);font-family:'Space Mono',monospace">Cannot reach:<br>${API}</div>
+        <div style="font-size:11px;color:var(--red);font-family:'DM Mono',monospace">Cannot reach:<br>${API}</div>
         <div style="font-size:11.5px;color:var(--t2);margin-top:4px;line-height:1.8">Fix in Railway:<br>1. Set <strong>DATABASE_URL</strong><br>2. Set <strong>ANTHROPIC_API_KEY</strong><br>3. Redeploy backend service</div>
       </div>`;
     }else{
@@ -938,7 +980,7 @@ async function loadDash(){
         <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px"><span>Backend API</span><span class="badge ${ok?'bl2':'bh2'}">${ok?'ONLINE':'DEGRADED'}</span></div>
         <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px"><span>Database</span><span class="badge ${db?'bl2':'bh2'}">${db?'CONNECTED':'DISCONNECTED'}</span></div>
         <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px"><span>AI Service</span><span class="badge ${ai?'bl2':'bm2'}">${ai?'READY':'NEEDS KEY'}</span></div>
-        <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--t3);margin-top:2px">v${h.version||'3.1.0'}</div>
+        <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--t3);margin-top:2px">v${h.version||'3.1.0'}</div>
         ${!db?'<div style="font-size:11px;color:var(--red)">⚠ Add DATABASE_URL in Railway → Variables</div>':''}
         ${!ai?'<div style="font-size:11px;color:var(--amber)">⚠ Add ANTHROPIC_API_KEY in Railway → Variables</div>':''}
       </div>`;
@@ -977,11 +1019,11 @@ async function loadC(){
       const cls=c.risk_level==='HIGH'?'bh2':c.risk_level==='MEDIUM'?'bm2':'bl2';
       const sb=c.source==='ppip_ocds'?'<span class="badge bb2" style="font-size:8px">PPIP</span>':'<span class="badge bn2" style="font-size:8px">MANUAL</span>';
       return`<tr>
-        <td style="font-family:'Space Mono',monospace;font-size:9px;color:var(--t3)">${(c.contract_id||'').slice(0,18)}</td>
+        <td style="font-family:'DM Mono',monospace;font-size:9px;color:var(--t3)">${(c.contract_id||'').slice(0,18)}</td>
         <td style="font-size:12px;max-width:175px">${(c.description||'').slice(0,52)}${(c.description||'').length>52?'...':''}</td>
         <td style="font-size:12px">${c.county||'—'}</td>
         <td><span class="badge bb2">${c.sector||'—'}</span></td>
-        <td style="font-family:'Space Mono',monospace;font-size:10px">${parseInt(c.value||0).toLocaleString()}</td>
+        <td style="font-family:'DM Mono',monospace;font-size:10px">${parseInt(c.value||0).toLocaleString()}</td>
         <td style="font-size:12px">${(c.supplier||'').slice(0,20)}${(c.supplier||'').length>20?'...':''}</td>
         <td><span class="badge ${cls}">${c.risk_score}/100</span></td>
         <td>${sb}</td>
@@ -1019,17 +1061,17 @@ async function loadGhost(){
         <div class="gpi" style="background:${bg}">
           <svg width="100%" height="96" viewBox="0 0 300 96"><rect width="300" height="96" fill="${bg}"/><rect x="18" y="9" width="264" height="78" rx="4" fill="none" stroke="${tc}" stroke-width="1.2" stroke-dasharray="6"/><text x="150" y="42" text-anchor="middle" fill="${tc}" font-size="10" font-family="Space Mono" font-weight="700">SENTINEL-2 IMAGERY</text><text x="150" y="60" text-anchor="middle" fill="${tc}" opacity=".55" font-size="9" font-family="Space Mono">${sat}</text></svg>
           <div style="position:absolute;top:8px;right:10px"><span class="badge ${s==='ghost'?'bh2':s==='partial'?'bm2':'bl2'}">${s.toUpperCase()}</span></div>
-          ${p.confidence_score?`<div style="position:absolute;top:8px;left:10px;font-family:'Space Mono',monospace;font-size:8px;color:${tc};font-weight:700">CONF:${p.confidence_score}%</div>`:''}
+          ${p.confidence_score?`<div style="position:absolute;top:8px;left:10px;font-family:'DM Mono',monospace;font-size:8px;color:${tc};font-weight:700">CONF:${p.confidence_score}%</div>`:''}
         </div>
         <div class="gpb">
           <div class="gpn">${p.project_name}</div>
           <div class="gpm">${p.contract_ref||'N/A'} · ${p.county||'KENYA'} · ${p.sector||''}</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-            <div style="background:var(--bg3);border-radius:7px;padding:9px;border:1px solid var(--border)"><div style="font-family:'Space Mono',monospace;font-size:8px;color:var(--t3);margin-bottom:3px;font-weight:700">CLAIMED</div><div style="font-size:11px;color:var(--text)">${(p.claimed_status||'—').slice(0,42)}</div></div>
-            <div style="background:var(--bg3);border-radius:7px;padding:9px;border:1px solid var(--border)"><div style="font-family:'Space Mono',monospace;font-size:8px;color:${tc};margin-bottom:3px;font-weight:700">SATELLITE</div><div style="font-size:11px;color:${tc}">${(p.satellite_status||'—').slice(0,42)}</div></div>
+            <div style="background:var(--bg3);border-radius:7px;padding:9px;border:1px solid var(--border)"><div style="font-family:'DM Mono',monospace;font-size:8px;color:var(--t3);margin-bottom:3px;font-weight:700">CLAIMED</div><div style="font-size:11px;color:var(--text)">${(p.claimed_status||'—').slice(0,42)}</div></div>
+            <div style="background:var(--bg3);border-radius:7px;padding:9px;border:1px solid var(--border)"><div style="font-family:'DM Mono',monospace;font-size:8px;color:${tc};margin-bottom:3px;font-weight:700">SATELLITE</div><div style="font-size:11px;color:${tc}">${(p.satellite_status||'—').slice(0,42)}</div></div>
           </div>
           <div style="display:flex;justify-content:space-between;align-items:center">
-            <span style="font-family:'Space Mono',monospace;font-size:10px;color:${tc};font-weight:700">KES ${parseInt(p.amount_at_risk||0).toLocaleString()}</span>
+            <span style="font-family:'DM Mono',monospace;font-size:10px;color:${tc};font-weight:700">KES ${parseInt(p.amount_at_risk||0).toLocaleString()}</span>
             ${s!=='verified'?`<button class="btn btn-r btn-sm">Report to EACC</button>`:`<span class="badge bl2">CLEAN</span>`}
           </div>
         </div>
@@ -1184,9 +1226,9 @@ async function loadSyncStatus(){
         return '<tr>' +
           '<td style="font-weight:700">' + l.year + '</td>' +
           '<td><span class="badge ' + badge + '">' + l.status.toUpperCase() + '</span>' + err + '</td>' +
-          '<td style="font-family:Space Mono,monospace;font-size:11px">' + (parseInt(l.records)||0).toLocaleString() + '</td>' +
-          '<td style="font-family:Space Mono,monospace;font-size:10px;color:var(--t3)">' + new Date(l.started_at).toLocaleString('en-KE') + '</td>' +
-          '<td style="font-family:Space Mono,monospace;font-size:10px;color:var(--t3)">' + fin + '</td>' +
+          '<td style="font-family:DM Mono,monospace;font-size:11px">' + (parseInt(l.records)||0).toLocaleString() + '</td>' +
+          '<td style="font-family:DM Mono,monospace;font-size:10px;color:var(--t3)">' + new Date(l.started_at).toLocaleString('en-KE') + '</td>' +
+          '<td style="font-family:DM Mono,monospace;font-size:10px;color:var(--t3)">' + fin + '</td>' +
           '</tr>';
       }).join('') +
       '</tbody></table>';
@@ -1207,7 +1249,7 @@ async function loadSyncStatus(){
       return '<div class="crow" style="margin-bottom:11px">' +
         '<div class="cn" style="width:135px;font-size:11.5px">' + label + '</div>' +
         '<div class="btrack"><div class="bfill" style="width:' + pct + '%;background:' + color + '"></div></div>' +
-        '<div style="min-width:75px;text-align:right;font-family:Space Mono,monospace;font-size:11px;color:var(--t2)">' + cnt.toLocaleString() + '</div>' +
+        '<div style="min-width:75px;text-align:right;font-family:DM Mono,monospace;font-size:11px;color:var(--t2)">' + cnt.toLocaleString() + '</div>' +
         '</div>';
     }).join('') +
     '<div class="ibox"><strong>Total contracts in database:</strong> ' + total.toLocaleString() + '</div>';
