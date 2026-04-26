@@ -80,6 +80,8 @@ app.get('/', (_req, res) => res.json({
     'POST /api/chatbot/message',
     'POST /api/sync/ocds',
     'GET  /api/sync/status',
+    'POST /api/webhooks/render',
+    'GET  /api/webhooks/status',
   ],
 }));
 
@@ -119,6 +121,7 @@ app.use('/api/ghost-projects', require('./routes/ghostProjects'));
 app.use('/api/ai',             require('./routes/ai'));
 app.use('/api/chatbot',        require('./routes/chatbot'));
 app.use('/api/sync',           require('./routes/ocdsSync'));
+app.use('/api/webhooks',       require('./routes/webhooks'));
 
 // ── 404 ───────────────────────────────────────────────────────────────────────
 app.use((req, res) => {
