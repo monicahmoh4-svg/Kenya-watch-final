@@ -11,8 +11,15 @@ const app  = express();
 const PORT = process.env.PORT || 5000;
 let dbReady = false;
 
+// ── Paths ─────────────────────────────────────────────────────────────────────
+// __dirname = /app/Backend  (on Render)  or  /home/claude/kw/Backend (local)
+// Frontend is at: <repo-root>/frontend/public/index.html
+// Admin is at:    <repo-root>/Backend/admin/index.html
+const FRONTEND_DIR = path.join(__dirname, '..', 'frontend', 'public');
+const ADMIN_DIR    = path.join(__dirname, 'admin');
+
 // ── Security ──────────────────────────────────────────────────────────────────
-// contentSecurityPolicy disabled so admin panel inline scripts work
+// contentSecurityPolicy disabled so inline scripts in frontend + admin work
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors({
   origin: '*',
@@ -21,7 +28,8 @@ app.use(cors({
 }));
 app.options('*', cors());
 
-// ── Rate limiting — NO separate /api/sync limiter (causes 404 after ~10 reqs) ─
+// ── Rate limiting ─────────────────────────────────────────────────────────────
+// ONE limiter on /api — do NOT add a separate /api/sync limiter
 app.use('/api/ai',      rateLimit({ windowMs: 60000, max: 40,  standardHeaders: true, legacyHeaders: false }));
 app.use('/api/chatbot', rateLimit({ windowMs: 60000, max: 40,  standardHeaders: true, legacyHeaders: false }));
 app.use('/api',         rateLimit({ windowMs: 60000, max: 500, standardHeaders: true, legacyHeaders: false }));
@@ -36,15 +44,14 @@ app.use((req, _res, next) => {
   next();
 });
 
-// ── Admin panel ───────────────────────────────────────────────────────────────
-// MUST be registered before the 404 handler and before API routes
-// so that GET /admin and GET /admin/ both serve the HTML file.
-const adminDir = path.join(__dirname, 'admin');
-app.use('/admin', express.static(adminDir, { index: 'index.html' }));
-app.get('/admin',  (_req, res) => res.sendFile(path.join(adminDir, 'index.html')));
-app.get('/admin/', (_req, res) => res.sendFile(path.join(adminDir, 'index.html')));
+// ── Admin panel — /admin ──────────────────────────────────────────────────────
+app.use('/admin', express.static(ADMIN_DIR, { index: 'index.html' }));
+app.get('/admin',  (_req, res) => res.sendFile(path.join(ADMIN_DIR, 'index.html')));
+app.get('/admin/', (_req, res) => res.sendFile(path.join(ADMIN_DIR, 'index.html')));
 
-// ── Health — always 200 so Railway healthcheck passes ─────────────────────────
+// ── Health ────────────────────────────────────────────────────────────────────
+// Always returns HTTP 200 so Render's healthcheck passes immediately.
+// DB status is reported in the body but does NOT affect the status code.
 app.get('/health', async (_req, res) => {
   let dbOk = false;
   try { if (dbReady) { await pool.query('SELECT 1'); dbOk = true; } } catch (_) {}
@@ -56,32 +63,6 @@ app.get('/health', async (_req, res) => {
     version:   '3.2.0',
   });
 });
-
-// ── Root ──────────────────────────────────────────────────────────────────────
-app.get('/', (_req, res) => res.json({
-  name:    'KenyaWatch AI Backend',
-  version: '3.2.0',
-  status:  'running',
-  db:      dbReady ? 'connected' : 'connecting',
-  admin:   '/admin',
-  routes: [
-    'GET  /admin',
-    'GET  /health',
-    'GET  /api/stats',
-    'GET  /api/contracts',
-    'POST /api/contracts/scan',
-    'GET  /api/reports',
-    'POST /api/reports',
-    'PATCH /api/reports/:id/status',
-    'GET  /api/ghost-projects',
-    'POST /api/ghost-projects',
-    'POST /api/ghost-projects/:id/refresh-satellite',
-    'POST /api/ai/chat',
-    'POST /api/chatbot/message',
-    'POST /api/sync/ocds',
-    'GET  /api/sync/status',
-  ],
-}));
 
 // ── Dashboard stats ───────────────────────────────────────────────────────────
 app.get('/api/stats', async (_req, res) => {
@@ -112,7 +93,7 @@ app.get('/api/stats', async (_req, res) => {
   }
 });
 
-// ── Feature routes — MUST come before the 404 handler ────────────────────────
+// ── API feature routes ────────────────────────────────────────────────────────
 app.use('/api/contracts',      require('./routes/contracts'));
 app.use('/api/reports',        require('./routes/reports'));
 app.use('/api/ghost-projects', require('./routes/ghostProjects'));
@@ -120,12 +101,14 @@ app.use('/api/ai',             require('./routes/ai'));
 app.use('/api/chatbot',        require('./routes/chatbot'));
 app.use('/api/sync',           require('./routes/ocdsSync'));
 
-// ── 404 ───────────────────────────────────────────────────────────────────────
-app.use((req, res) => {
-  return res.status(404).json({
-    success: false,
-    error:   'Route ' + req.method + ' ' + req.path + ' not found',
-  });
+// ── Frontend — serve React/HTML app for ALL non-API, non-admin routes ─────────
+// This MUST come after all API and admin routes.
+// It serves index.html for any path that isn't an API or admin route,
+// enabling client-side routing (SPA pattern).
+app.use(express.static(FRONTEND_DIR));
+app.get('*', (req, res) => {
+  // Only serve index.html for paths that aren't files
+  res.sendFile(path.join(FRONTEND_DIR, 'index.html'));
 });
 
 // ── Global error handler ──────────────────────────────────────────────────────
@@ -137,14 +120,16 @@ app.use((err, req, res, next) => {
   }
 });
 
-// ── Startup: listen FIRST, DB init in background ─────────────────────────────
-// listen() is called before initDB() so Railway's /health check always
-// gets a 200 immediately. The DB connects in the background.
+// ── Startup: listen FIRST, DB in background ───────────────────────────────────
+// listen() is called before initDB() so Render's healthcheck always gets
+// a 200 immediately. DB connects in the background without blocking.
 app.listen(PORT, '0.0.0.0', () => {
   console.log('🚀 KenyaWatch AI v3.2 on port ' + PORT);
-  console.log('🖥  Admin: http://localhost:' + PORT + '/admin');
-  console.log('🤖 AI  : ' + (process.env.ANTHROPIC_API_KEY ? 'READY' : '⚠  Set ANTHROPIC_API_KEY in Railway Variables'));
-  console.log('🗄  DB  : ' + (process.env.DATABASE_URL ? 'connecting...' : '⚠  Set DATABASE_URL in Railway Variables'));
+  console.log('🌐 Frontend : /  (served from ' + FRONTEND_DIR + ')');
+  console.log('🖥  Admin   : /admin');
+  console.log('🔧 API      : /api/*');
+  console.log('🤖 AI       : ' + (process.env.ANTHROPIC_API_KEY ? 'READY' : '⚠  Set ANTHROPIC_API_KEY in Render Environment'));
+  console.log('🗄  DB       : ' + (process.env.DATABASE_URL ? 'connecting...' : '⚠  Set DATABASE_URL in Render Environment'));
 
   initDB()
     .then(() => {
@@ -152,7 +137,7 @@ app.listen(PORT, '0.0.0.0', () => {
       console.log('✅ Database ready — all routes operational');
     })
     .catch((e) => {
+      // Server stays up. /health stays 200. DB routes return 500 until reconnected.
       console.error('⚠  DB init failed:', e.message);
-      // Server stays up. /health stays green. DB routes return 500 until reconnected.
     });
 });
