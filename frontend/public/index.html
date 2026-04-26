@@ -312,7 +312,7 @@ nav::-webkit-scrollbar{display:none}
 .gpc{background:var(--card);border:1px solid var(--border);border-radius:13px;
   overflow:hidden;box-shadow:var(--s1);transition:all .2s}
 .gpc:hover{transform:translateY(-2px);box-shadow:var(--s2);border-color:var(--border2)}
-.gpi{height:96px;display:flex;align-items:center;justify-content:center;position:relative}
+.gpi{height:160px;display:block;position:relative;overflow:hidden}
 .gpb{padding:15px}
 .gpn{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:4px}
 .gpm{font-family:'DM Mono',monospace;font-size:9px;color:var(--t3);margin-bottom:10px}
@@ -819,7 +819,7 @@ nav::-webkit-scrollbar{display:none}
 
 <script>
 'use strict';
-const API = window.KENYAWATCH_API || 'https://kenya-watch-final-production.up.railway.app';
+const API = window.KENYAWATCH_API || '';
 
 // ══ EMBEDDED INTELLIGENCE — renders instantly, no backend needed ══════════════
 const CD = [
@@ -929,6 +929,25 @@ function show(id){
   const idx={dashboard:0,procurement:1,ghost:2,report:3,ai:4,sync:5,about:6}[id];
   document.querySelectorAll('.nb')[idx]?.classList.add('active');
   ({dashboard:loadDash,procurement:loadC,ghost:loadGhost,report:loadReports,sync:loadSyncStatus})[id]?.();
+}
+
+// ══ SATELLITE REFRESH ════════════════════════════════════════════════════
+async function refreshSat(id){
+  const btn = event.target;
+  if(btn){btn.disabled=true;btn.textContent='🛰 ...';}
+  try{
+    const r = await api('/api/ghost-projects/'+id+'/refresh-satellite',{method:'POST',body:'{}'});
+    if(r.success){
+      // Reload ghost grid after 15s to show updated imagery
+      setTimeout(()=>loadGhost(),15000);
+      const note = document.createElement('div');
+      note.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#065f46;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;z-index:9999;font-family:DM Sans,sans-serif';
+      note.textContent='🛰 Satellite refresh started — images update in ~15 seconds';
+      document.body.appendChild(note);
+      setTimeout(()=>note.remove(),8000);
+    }
+  }catch(e){console.warn('Sat refresh error',e.message);}
+  if(btn){btn.disabled=false;btn.textContent='🛰 Refresh';}
 }
 
 // ══ DASHBOARD LIVE ═════════════════════════════════════════════════════════
@@ -1055,13 +1074,38 @@ async function loadGhost(){
     if(!data?.length){grid.innerHTML='<div style="color:var(--t3)">No ghost projects found.</div>';return;}
     grid.innerHTML=data.map(p=>{
       const s=p.detection_status;
-      const[bg,tc]=s==='ghost'?['#fff5f5','var(--red)']:s==='partial'?['#fffbeb','var(--amber)']:['#f0fdf4','var(--gtext)'];
-      const sat=s==='ghost'?'Empty land detected':s==='partial'?'Partial build only':'Structure confirmed';
+      const[bg,tc]=s==='ghost'?['#1a0000','var(--red)']:s==='partial'?['#1a0e00','var(--amber)']:['#001a08','var(--gtext)'];
+      const sat=s==='ghost'?'No structure detected':s==='partial'?'Partial build only':'Structure confirmed';
+
+      // Real Sentinel-2 thumbnail from Copernicus — shown when available
+      // Fallback: curated HD satellite images of Kenya terrain from Unsplash
+      const kenyaFallbacks = {
+        ghost:   'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=600&q=85&auto=format&fit=crop',
+        partial: 'https://images.unsplash.com/photo-1617789160753-ec2957bec344?w=600&q=85&auto=format&fit=crop',
+        verified:'https://images.unsplash.com/photo-1562516155-e0d1ee0a9b0c?w=600&q=85&auto=format&fit=crop',
+      };
+      const thumb = p.sentinel_thumbnail || kenyaFallbacks[s] || kenyaFallbacks.ghost;
+      const imgSrc = thumb;
+      const isSentinel = !!p.sentinel_thumbnail;
+      const acquired = p.sentinel_acquired ? new Date(p.sentinel_acquired).toLocaleDateString('en-KE',{month:'short',year:'numeric'}) : '';
+      const cloudPct = p.sentinel_cloud_pct != null ? Math.round(p.sentinel_cloud_pct) + '% cloud' : '';
+
       return`<div class="gpc">
-        <div class="gpi" style="background:${bg}">
-          <svg width="100%" height="96" viewBox="0 0 300 96"><rect width="300" height="96" fill="${bg}"/><rect x="18" y="9" width="264" height="78" rx="4" fill="none" stroke="${tc}" stroke-width="1.2" stroke-dasharray="6"/><text x="150" y="42" text-anchor="middle" fill="${tc}" font-size="10" font-family="Space Mono" font-weight="700">SENTINEL-2 IMAGERY</text><text x="150" y="60" text-anchor="middle" fill="${tc}" opacity=".55" font-size="9" font-family="Space Mono">${sat}</text></svg>
-          <div style="position:absolute;top:8px;right:10px"><span class="badge ${s==='ghost'?'bh2':s==='partial'?'bm2':'bl2'}">${s.toUpperCase()}</span></div>
-          ${p.confidence_score?`<div style="position:absolute;top:8px;left:10px;font-family:'DM Mono',monospace;font-size:8px;color:${tc};font-weight:700">CONF:${p.confidence_score}%</div>`:''}
+        <div class="gpi" style="background:#000;height:160px;overflow:hidden;position:relative">
+          <img src="${imgSrc}"
+            alt="Sentinel-2 satellite view — ${p.project_name}"
+            style="width:100%;height:100%;object-fit:cover;opacity:${isSentinel?'.95':'.65'};filter:${s==='ghost'?'saturate(.4) brightness(.8)':s==='partial'?'saturate(.7)':'saturate(1.1)'}"
+            onerror="this.src='https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=600&q=85&auto=format&fit=crop'">
+          <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.75) 0%,transparent 60%)"></div>
+          <div style="position:absolute;top:8px;right:8px"><span class="badge ${s==='ghost'?'bh2':s==='partial'?'bm2':'bl2'}">${s.toUpperCase()}</span></div>
+          ${p.confidence_score?`<div style="position:absolute;top:8px;left:8px;font-family:'DM Mono',monospace;font-size:9px;color:#fff;font-weight:700;background:rgba(0,0,0,.55);padding:3px 7px;border-radius:4px">CONF: ${p.confidence_score}%</div>`:''}
+          <div style="position:absolute;bottom:8px;left:8px;display:flex;gap:6px;align-items:center">
+            ${isSentinel?`<span style="font-family:'DM Mono',monospace;font-size:8px;color:#4ade80;background:rgba(0,0,0,.6);padding:2px 6px;border-radius:3px">🛰 SENTINEL-2</span>`:
+            `<span style="font-family:'DM Mono',monospace;font-size:8px;color:rgba(255,255,255,.6);background:rgba(0,0,0,.5);padding:2px 6px;border-radius:3px">📡 SATELLITE VIEW</span>`}
+            ${acquired?`<span style="font-family:'DM Mono',monospace;font-size:8px;color:rgba(255,255,255,.6);background:rgba(0,0,0,.5);padding:2px 6px;border-radius:3px">${acquired}</span>`:''}
+            ${cloudPct?`<span style="font-family:'DM Mono',monospace;font-size:8px;color:rgba(255,255,255,.5);background:rgba(0,0,0,.5);padding:2px 6px;border-radius:3px">☁ ${cloudPct}</span>`:''}
+          </div>
+          ${p.latitude?`<div style="position:absolute;bottom:8px;right:8px;font-family:'DM Mono',monospace;font-size:8px;color:rgba(255,255,255,.55);background:rgba(0,0,0,.5);padding:2px 6px;border-radius:3px">${parseFloat(p.latitude).toFixed(4)}°, ${parseFloat(p.longitude).toFixed(4)}°</div>`:''}
         </div>
         <div class="gpb">
           <div class="gpn">${p.project_name}</div>
@@ -1072,7 +1116,12 @@ async function loadGhost(){
           </div>
           <div style="display:flex;justify-content:space-between;align-items:center">
             <span style="font-family:'DM Mono',monospace;font-size:10px;color:${tc};font-weight:700">KES ${parseInt(p.amount_at_risk||0).toLocaleString()}</span>
-            ${s!=='verified'?`<button class="btn btn-r btn-sm">Report to EACC</button>`:`<span class="badge bl2">CLEAN</span>`}
+            ${s!=='verified'?
+              `<div style="display:flex;gap:7px">
+                <button class="btn btn-r btn-sm">Report to EACC</button>
+                ${p.latitude?`<button class="btn btn-o btn-sm" onclick="refreshSat(${p.id})" title="Refresh Sentinel-2 imagery">🛰 Refresh</button>`:''}
+               </div>`:
+              `<span class="badge bl2">✅ VERIFIED CLEAN</span>`}
           </div>
         </div>
       </div>`;
@@ -1354,4 +1403,4 @@ function showFb(el,msg,type){el.className='fb3 show '+(type==='g'?'fbg':'fbr');e
 loadDash();
 </script>
 </body>
-</html>
+</html> 
