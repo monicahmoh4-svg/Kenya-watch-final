@@ -1,148 +1,340 @@
 'use strict';
+/**
+ * KenyaWatch AI — AI Investigator Route
+ * Uses Google Gemini API (FREE tier — no billing required)
+ * Model: gemini-2.0-flash-exp (fast, accurate, free)
+ *
+ * Get your free API key at: https://aistudio.google.com/apikey
+ * Set it as: GEMINI_API_KEY in your Render environment variables
+ */
+
 const router = require('express').Router();
 const https  = require('https');
 const { pool } = require('../db');
 
-function safeJSON(v) { try { return Array.isArray(v) ? v : JSON.parse(v || '[]'); } catch { return []; } }
+// ── Gemini model config ───────────────────────────────────────────────────────
+// gemini-2.0-flash-exp = latest, free, fast, very capable
+// gemini-1.5-flash      = fallback if 2.0 unavailable
+const GEMINI_MODEL = 'gemini-2.0-flash-exp';
+const GEMINI_HOST  = 'generativelanguage.googleapis.com';
 
-const SYSTEM = `You are KenyaWatch AI, Kenya's anti-corruption intelligence assistant with live database access.
+// ── System instruction for Gemini ─────────────────────────────────────────────
+const SYSTEM_INSTRUCTION = `You are KenyaWatch AI, an expert anti-corruption investigator for Kenya.
+You are embedded in the KenyaWatch AI platform which monitors government procurement contracts
+across all 47 Kenya counties using real PPIP/OCDS data.
 
-Key Kenya anti-corruption contacts:
-- EACC toll-free: 1551 | Mobile: 0727 285663 / 0733 520641 | Landline: (020) 2717468
-- DPP: corruption@dpp.go.ke | PPRA: ppra.go.ke
+YOUR EXPERTISE:
+- Kenya Public Procurement and Asset Disposal Act 2015 (PPADA)
+- Ethics and Anti-Corruption Commission (EACC) enforcement patterns
+- Public Procurement Regulatory Authority (PPRA) guidelines
+- County Governments Act 2012 devolved procurement rules
+- World Bank, AfDB, EU procurement standards applied in Kenya
+- Real fraud patterns identified in Kenya Auditor General reports 2019-2024
 
-Expertise: Kenya PPADA 2015 (amended 2025), EACC Act, County Governments Act, KRA compliance, World Bank/AFDB procurement standards.
+FRAUD INDICATORS YOU DETECT:
+1. Single-source/direct awards over KES 5M without documented justification = HIGH RISK
+2. Supplier company registered less than 12 months before contract award = HIGH RISK
+3. Contract value more than 200% above comparable market tenders = PRICE INFLATION
+4. Same supplier winning contracts across multiple counties simultaneously = CARTEL PATTERN
+5. Director names matching government official family members = CONFLICT OF INTEREST
+6. Ghost projects: fully paid contracts with no satellite-verifiable construction = FRAUD
+7. Emergency procurement classification used for routine purchases = ABUSE
+8. Restricted tender process for contracts above the open tender threshold = VIOLATION
+9. Payments released before project completion = PROCUREMENT ABUSE
+10. Shell companies with minimal registration details winning large contracts = RED FLAG
 
-Rules: concise (≤250 words unless deep analysis requested), use **bold** for key entities/figures, cite specific contract IDs from context, end with one clear actionable recommendation. Respond in user's language.`;
+KENYA OVERSIGHT BODIES:
+- EACC: 0800 720 880 (free, 24/7) | eacc.go.ke | info@eacc.go.ke
+- DPP: corruption@dpp.go.ke | dpp.go.ke (for criminal prosecution)
+- PPRA: info@ppra.go.ke | ppra.go.ke | tenders.go.ke (procurement complaints)
+- Auditor General: oagkenya.go.ke (financial irregularities)
+- ODPP: for criminal referrals on grand corruption
 
-async function getDBContext() {
+RESPONSE RULES:
+- Be direct, specific, and data-driven — reference actual contract IDs and values from the data
+- Use **bold** for key risk figures, entity names, and contract IDs
+- When you see fraud patterns in the data, name them explicitly
+- Always end with one clear actionable recommendation
+- If asked in Kiswahili, respond in Kiswahili
+- Maximum 350 words unless user explicitly asks for a detailed report
+- Format with short paragraphs — no walls of text`;
+
+// ── Pull live database context ────────────────────────────────────────────────
+async function getLiveContext() {
   try {
-    const [stats, high, reports, ghosts] = await Promise.all([
-      pool.query(`SELECT COUNT(*) AS total, COUNT(*) FILTER (WHERE risk_level='HIGH') AS high_risk, COALESCE(SUM(value) FILTER (WHERE risk_level='HIGH'),0) AS flagged FROM contracts`),
-      pool.query(`SELECT contract_id,description,county,value,supplier,risk_score,flags FROM contracts WHERE risk_level='HIGH' ORDER BY risk_score DESC LIMIT 6`),
-      pool.query(`SELECT case_number,type,county,status,ai_credibility_score FROM reports ORDER BY created_at DESC LIMIT 5`),
-      pool.query(`SELECT project_name,county,detection_status,amount_at_risk,confidence_score FROM ghost_projects WHERE detection_status IN ('ghost','partial') LIMIT 5`),
+    const [contracts, reports, ghosts, stats] = await Promise.all([
+      pool.query(`
+        SELECT contract_id, description, county, sector, value, supplier,
+               bid_type, risk_score, risk_level, flags, awarded_date, procuring_entity
+        FROM contracts
+        ORDER BY risk_score DESC, value DESC
+        LIMIT 30
+      `),
+      pool.query(`
+        SELECT case_number, type, county, sector, description,
+               amount, status, ai_credibility_score, routing, created_at
+        FROM reports
+        ORDER BY created_at DESC
+        LIMIT 15
+      `),
+      pool.query(`
+        SELECT contract_ref, project_name, county, sector,
+               claimed_status, satellite_status, amount_at_risk,
+               detection_status, confidence_score
+        FROM ghost_projects
+        WHERE detection_status IN ('ghost','partial')
+        ORDER BY amount_at_risk DESC
+        LIMIT 10
+      `),
+      pool.query(`
+        SELECT
+          COUNT(*) FILTER (WHERE risk_level='HIGH')   AS high_risk,
+          COUNT(*) FILTER (WHERE risk_level='MEDIUM') AS medium_risk,
+          COUNT(*) FILTER (WHERE risk_level='LOW')    AS low_risk,
+          COUNT(*)                                     AS total,
+          COALESCE(SUM(value) FILTER (WHERE risk_level='HIGH'),0) AS high_risk_value
+        FROM contracts
+      `),
     ]);
+
     const s = stats.rows[0];
-    return `=== LIVE DATABASE ===
-Stats: ${s.total} contracts, ${s.high_risk} HIGH RISK, KES ${(s.flagged / 1e9).toFixed(2)}B flagged
+    const fmt = v => {
+      const n = parseInt(v) || 0;
+      return n >= 1e9 ? 'KES '+(n/1e9).toFixed(1)+'B'
+           : n >= 1e6 ? 'KES '+(n/1e6).toFixed(0)+'M'
+           : 'KES '+n.toLocaleString();
+    };
 
-HIGH-RISK CONTRACTS:
-${high.rows.map(c => `• ${c.contract_id} | ${c.description} | ${c.county} | KES ${(c.value / 1e6).toFixed(0)}M | Score:${c.risk_score} | ${safeJSON(c.flags).slice(0, 2).join('; ')}`).join('\n')}
+    let ctx = `\n\n=== LIVE KENYAWATCH DATABASE (${new Date().toISOString().slice(0,16)} EAT) ===\n`;
+    ctx += `SUMMARY: ${s.total} contracts total | HIGH: ${s.high_risk} (${fmt(s.high_risk_value)}) | MEDIUM: ${s.medium_risk} | LOW: ${s.low_risk}\n`;
 
-RECENT REPORTS:
-${reports.rows.map(r => `• ${r.case_number} | ${r.type} | ${r.county || 'N/A'} | ${r.status} | Credibility:${r.ai_credibility_score}`).join('\n')}
+    if (contracts.rows.length) {
+      ctx += `\nTOP CONTRACTS BY RISK SCORE:\n`;
+      contracts.rows.forEach(c => {
+        const flags = (() => {
+          try { return Array.isArray(c.flags) ? c.flags : JSON.parse(c.flags||'[]'); }
+          catch { return []; }
+        })();
+        ctx += `\n• [${c.contract_id}] ${(c.description||'').slice(0,90)}\n`;
+        ctx += `  ${c.county||'?'} | ${c.sector||'?'} | ${fmt(c.value)} | ${c.bid_type||'open'} tender\n`;
+        ctx += `  Supplier: ${c.supplier||'Unknown'} | RISK: ${c.risk_level} (${c.risk_score}/100)\n`;
+        if (c.procuring_entity) ctx += `  Entity: ${c.procuring_entity}\n`;
+        if (flags.length) ctx += `  Flags: ${flags.slice(0,3).join(' | ')}\n`;
+      });
+    }
 
-GHOST PROJECTS:
-${ghosts.rows.map(g => `• ${g.project_name} | ${g.county} | ${g.detection_status.toUpperCase()} | KES ${(g.amount_at_risk / 1e6).toFixed(0)}M | Confidence:${g.confidence_score}%`).join('\n')}
-====================`;
-  } catch {
-    return '=== DB context unavailable ===';
+    if (ghosts.rows.length) {
+      ctx += `\nGHOST PROJECTS (satellite-verified fraud):\n`;
+      ghosts.rows.forEach(g => {
+        ctx += `\n• [${g.contract_ref||'N/A'}] ${g.project_name} (${g.county})\n`;
+        ctx += `  Status: ${g.detection_status.toUpperCase()} | Confidence: ${g.confidence_score}% | At risk: ${fmt(g.amount_at_risk)}\n`;
+        ctx += `  Claimed: ${(g.claimed_status||'').slice(0,80)}\n`;
+        ctx += `  Satellite: ${(g.satellite_status||'').slice(0,80)}\n`;
+      });
+    }
+
+    if (reports.rows.length) {
+      ctx += `\nCITIZEN REPORTS:\n`;
+      reports.rows.forEach(r => {
+        ctx += `\n• [${r.case_number}] ${r.type} | ${r.county||'Kenya'} | ${r.sector||'Gov'}\n`;
+        ctx += `  Status: ${r.status} | AI score: ${r.ai_credibility_score}/100 | Routing: ${r.routing}\n`;
+        ctx += `  ${(r.description||'').slice(0,100)}\n`;
+      });
+    }
+
+    ctx += `\n=== END LIVE DATA ===\n`;
+    return ctx;
+
+  } catch (e) {
+    console.error('DB context error:', e.message);
+    return '\n[Live database context unavailable — answering from training knowledge]\n';
   }
 }
 
-function callClaude(messages, systemWithCtx) {
-  return new Promise(resolve => {
-    const key = process.env.ANTHROPIC_API_KEY;
-    if (!key) return resolve({ ok: false, text: getAIFallback(messages[messages.length - 1]?.content || '') });
+// ── Call Gemini API ────────────────────────────────────────────────────────────
+function callGemini(history, systemInstruction, userMessage) {
+  return new Promise((resolve, reject) => {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) return reject(new Error('GEMINI_API_KEY not set'));
 
-    const body = JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 800, system: systemWithCtx, messages });
-    const opts = {
-      hostname: 'api.anthropic.com', path: '/v1/messages', method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'Content-Length': Buffer.byteLength(body) }
+    // Build Gemini contents array from history + new message
+    const contents = [
+      ...history,
+      { role: 'user', parts: [{ text: userMessage }] },
+    ];
+
+    const body = JSON.stringify({
+      system_instruction: {
+        parts: [{ text: systemInstruction }],
+      },
+      contents,
+      generationConfig: {
+        temperature:     0.4,   // Lower = more precise/factual for fraud analysis
+        topP:            0.85,
+        maxOutputTokens: 1024,
+      },
+      safetySettings: [
+        { category: 'HARM_CATEGORY_HARASSMENT',        threshold: 'BLOCK_NONE' },
+        { category: 'HARM_CATEGORY_HATE_SPEECH',        threshold: 'BLOCK_NONE' },
+        { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',  threshold: 'BLOCK_NONE' },
+        { category: 'HARM_CATEGORY_DANGEROUS_CONTENT',  threshold: 'BLOCK_NONE' },
+      ],
+    });
+
+    const path = '/v1beta/models/' + GEMINI_MODEL + ':generateContent?key=' + apiKey;
+
+    const options = {
+      hostname: GEMINI_HOST,
+      path,
+      method:   'POST',
+      headers:  {
+        'Content-Type':   'application/json',
+        'Content-Length': Buffer.byteLength(body),
+      },
     };
 
-    const req = https.request(opts, res => {
+    const req = https.request(options, (res) => {
       let data = '';
-      res.on('data', c => data += c);
+      res.on('data', chunk => { data += chunk; });
       res.on('end', () => {
         try {
-          const p = JSON.parse(data);
-          if (p.error) return resolve({ ok: false, text: getAIFallback('', p.error.message) });
-          resolve({ ok: true, text: p.content?.map(b => b.text || '').join('') || '' });
-        } catch { resolve({ ok: false, text: getAIFallback('') }); }
+          const parsed = JSON.parse(data);
+
+          // Handle Gemini error responses
+          if (parsed.error) {
+            return reject(new Error(parsed.error.message || 'Gemini API error ' + parsed.error.code));
+          }
+
+          // Extract text from Gemini response structure
+          const candidate = parsed.candidates && parsed.candidates[0];
+          if (!candidate) return reject(new Error('No response from Gemini'));
+
+          // Check finish reason
+          if (candidate.finishReason === 'SAFETY') {
+            return reject(new Error('Response blocked by safety filters'));
+          }
+
+          const text = (candidate.content?.parts || [])
+            .map(p => p.text || '')
+            .join('')
+            .trim();
+
+          if (!text) return reject(new Error('Empty response from Gemini'));
+          resolve(text);
+
+        } catch (e) {
+          reject(new Error('Failed to parse Gemini response: ' + e.message));
+        }
       });
     });
 
-    req.on('error', err => {
-      console.error('Claude API error:', err.message);
-      resolve({ ok: false, text: getAIFallback('') });
+    req.on('error', reject);
+    req.setTimeout(30000, () => {
+      req.destroy();
+      reject(new Error('Gemini API request timed out'));
     });
-    req.setTimeout(25000, () => { req.destroy(); resolve({ ok: false, text: getAIFallback('') }); });
+
     req.write(body);
     req.end();
   });
 }
 
-function getAIFallback(msg, errMsg = '') {
-  if (errMsg && (errMsg.includes('401') || errMsg.includes('API key'))) {
-    return '⚠️ AI service needs configuration. Administrator: please add **ANTHROPIC_API_KEY** in Railway → Variables tab.\n\nFor immediate corruption reporting:\n**EACC: 1551** (toll-free) | **0727 285663** | **(020) 2717468**';
-  }
-  const m = (msg || '').toLowerCase();
-  if (m.includes('contract') || m.includes('procurement')) {
-    return 'Use **📋 Procurement Scanner** to analyse contracts. Navigate to the Procurement tab and click **+ Scan Contract** to get an AI risk score (0-100) with specific fraud flags.\n\n**EACC: 1551** to report suspicious contracts.';
-  }
-  if (m.includes('report') || m.includes('bribe')) {
-    return 'To report corruption:\n\n1. Click **🚨 Report** in the navigation\n2. Fill in details anonymously — identity never stored\n3. AI routes to **EACC, DPP, or PPRA**\n\n**EACC Toll-Free: 1551** (24/7, free)\nAlternative: **0727 285663** | **(020) 2717468**';
-  }
-  if (m.includes('eacc') || m.includes('contact')) {
-    return '**EACC Contacts:**\n\n• Toll-free: **1551**\n• Mobile: **0727 285663** or **0733 520641**\n• Landline: **(020) 2717468**\n• eacc.go.ke\n\n**DPP:** corruption@dpp.go.ke\n**PPRA:** ppra.go.ke';
-  }
-  return 'I\'m **KenyaWatch AI** — your anti-corruption assistant for Kenya. Ask about contracts, corruption patterns, or ghost projects.\n\n**EACC: 1551** (toll-free) | **0727 285663**';
-}
-
-// Session store
+// ── Session memory ─────────────────────────────────────────────────────────────
+// Gemini uses {role:'user'|'model', parts:[{text}]} format
 const sessions = new Map();
-function getHist(sid) { return sessions.get(sid) || []; }
-function addHist(sid, role, content) {
-  const h = getHist(sid); h.push({ role, content });
-  while (h.length > 20) h.shift();
-  sessions.set(sid, h);
+const MAX_TURNS = 10;
+
+function getSession(id) { return sessions.get(id) || []; }
+function saveSession(id, contents) {
+  sessions.set(id, contents.slice(-(MAX_TURNS * 2)));
 }
 
+// ── POST /api/ai/chat ─────────────────────────────────────────────────────────
 router.post('/chat', async (req, res) => {
+  const { message, session_id } = req.body;
+
+  if (!message || !message.trim()) {
+    return res.status(400).json({ success: false, error: 'message is required' });
+  }
+
+  if (!process.env.GEMINI_API_KEY) {
+    return res.json({
+      success:  true,
+      fallback: true,
+      reply: '⚠️ **AI not configured yet.**\n\n' +
+             'To activate the AI Investigator:\n\n' +
+             '1. Go to **https://aistudio.google.com/apikey**\n' +
+             '2. Create a free API key (no billing required)\n' +
+             '3. In **Render → Your Service → Environment**, add:\n' +
+             '   `GEMINI_API_KEY` = your key\n' +
+             '4. Click **Save** — the AI activates immediately\n\n' +
+             'The Gemini API is **completely free** with generous limits.',
+    });
+  }
+
+  const sid     = (session_id || 'default').toString().slice(0, 80);
+  const userMsg = message.trim().slice(0, 3000);
+
   try {
-    const { message, session_id } = req.body;
-    if (!message?.trim()) return res.status(400).json({ success: false, error: 'message required' });
-    const sid = session_id || 'default';
-    const msg = message.trim().slice(0, 1000);
-    addHist(sid, 'user', msg);
-    const dbCtx = await getDBContext();
-    const { ok, text } = await callClaude(getHist(sid), SYSTEM + '\n\n' + dbCtx);
-    addHist(sid, 'assistant', text);
-    if (session_id) pool.query('INSERT INTO chat_logs (session_id,role,content) VALUES ($1,$2,$3)', [sid, 'assistant', text]).catch(() => {});
-    res.json({ success: true, reply: text, fallback: !ok, session_id: sid });
+    // Get live database context
+    const liveContext = await getLiveContext();
+
+    // Full system instruction = base + live data
+    const fullSystem = SYSTEM_INSTRUCTION + liveContext;
+
+    // Get conversation history (Gemini format)
+    const history = getSession(sid);
+
+    // Call Gemini
+    const reply = await callGemini(history, fullSystem, userMsg);
+
+    // Update history in Gemini format
+    history.push({ role: 'user',  parts: [{ text: userMsg }] });
+    history.push({ role: 'model', parts: [{ text: reply   }] });
+    saveSession(sid, history);
+
+    return res.json({
+      success:    true,
+      reply,
+      fallback:   false,
+      session_id: sid,
+      model:      GEMINI_MODEL,
+    });
+
   } catch (e) {
     console.error('AI chat error:', e.message);
-    res.json({ success: true, reply: getAIFallback(req.body?.message || ''), fallback: true });
+
+    let reply;
+    if (e.message.includes('API_KEY') || e.message.includes('400') || e.message.includes('401') || e.message.includes('403')) {
+      reply = '⚠️ **Invalid Gemini API key.**\n\nPlease check that `GEMINI_API_KEY` is correctly set in your Render environment variables.\n\nGet a free key at: **https://aistudio.google.com/apikey**';
+    } else if (e.message.includes('quota') || e.message.includes('429') || e.message.includes('RESOURCE_EXHAUSTED')) {
+      reply = '⏱️ **API rate limit reached.** The free Gemini tier allows 15 requests/minute and 1500/day.\n\nPlease wait a moment and try again.';
+    } else if (e.message.includes('timeout')) {
+      reply = '⏱️ Request timed out. Please try again — this is usually temporary.';
+    } else {
+      reply = '❌ AI error: ' + e.message + '\n\nPlease try again. If the problem persists, check your `GEMINI_API_KEY` in Render environment variables.';
+    }
+
+    return res.json({ success: true, reply, fallback: true, error: e.message });
   }
 });
 
-router.post('/analyse-contract', async (req, res) => {
-  try {
-    const { contract_id } = req.body;
-    if (!contract_id) return res.status(400).json({ success: false, error: 'contract_id required' });
-    const { rows } = await pool.query('SELECT * FROM contracts WHERE contract_id=$1 OR id::text=$1', [contract_id]);
-    if (!rows.length) return res.status(404).json({ success: false, error: 'Contract not found' });
-    const c = { ...rows[0], flags: safeJSON(rows[0].flags) };
-    const dbCtx = await getDBContext();
-    const prompt = `Deep analysis of contract ${c.contract_id}: ${c.description} | ${c.county} | KES ${(c.value / 1e6).toFixed(1)}M | Supplier: ${c.supplier} | Bid: ${c.bid_type} | Risk: ${c.risk_score}/100 (${c.risk_level}) | Flags: ${c.flags.join('; ')}. Provide: 1) Risk summary 2) Key concerns 3) Recommended action`;
-    const { ok, text } = await callClaude([{ role: 'user', content: prompt }], SYSTEM + '\n\n' + dbCtx);
-    res.json({ success: true, data: c, analysis: text, fallback: !ok });
-  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+// ── GET /api/ai/status ────────────────────────────────────────────────────────
+router.get('/status', (_req, res) => {
+  res.json({
+    success:  true,
+    ai_ready: !!process.env.GEMINI_API_KEY,
+    provider: 'Google Gemini',
+    model:    GEMINI_MODEL,
+    free:     true,
+    sessions: sessions.size,
+  });
 });
 
-router.get('/history/:session_id', (req, res) => {
-  res.json({ success: true, data: getHist(req.params.session_id) });
-});
-
-router.delete('/history/:session_id', (req, res) => {
-  sessions.delete(req.params.session_id);
-  res.json({ success: true, message: 'Cleared' });
-});
-
-router.get('/status', (req, res) => {
-  res.json({ success: true, ai_enabled: !!process.env.ANTHROPIC_API_KEY, sessions: sessions.size });
+// ── DELETE /api/ai/session/:id ────────────────────────────────────────────────
+router.delete('/session/:id', (req, res) => {
+  sessions.delete(req.params.id);
+  res.json({ success: true });
 });
 
 module.exports = router;
