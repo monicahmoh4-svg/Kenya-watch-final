@@ -11,7 +11,7 @@
 const router = require('express').Router();
 const https  = require('https');
 
-const GEMINI_MODEL = 'gemini-2.0-flash-exp';
+const GEMINI_MODEL = 'gemini-1.5-flash';
 const GEMINI_HOST  = 'generativelanguage.googleapis.com';
 
 // ── Chatbot system instruction ────────────────────────────────────────────────
