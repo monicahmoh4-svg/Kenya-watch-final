@@ -58,7 +58,7 @@ app.get('/health', async (_req, res) => {
   return res.status(200).json({
     status:    dbOk ? 'ok' : 'starting',
     database:  dbOk ? 'connected' : 'connecting',
-    ai:        process.env.ANTHROPIC_API_KEY ? 'configured' : 'missing_api_key',
+    ai:        process.env.GEMINI_API_KEY ? 'configured' : 'missing_api_key',
     timestamp: new Date().toISOString(),
     version:   '3.2.0',
   });
@@ -128,7 +128,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log('🌐 Frontend : /  (served from ' + FRONTEND_DIR + ')');
   console.log('🖥  Admin   : /admin');
   console.log('🔧 API      : /api/*');
-  console.log('🤖 AI       : ' + (process.env.ANTHROPIC_API_KEY ? 'READY' : '⚠  Set ANTHROPIC_API_KEY in Render Environment'));
+  console.log('🤖 AI       : ' + (process.env.GEMINI_API_KEY ? 'READY' : '⚠  Set GEMINI_API_KEY in Render Environment'));
   console.log('🗄  DB       : ' + (process.env.DATABASE_URL ? 'connecting...' : '⚠  Set DATABASE_URL in Render Environment'));
 
   initDB()
