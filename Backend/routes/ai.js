@@ -15,7 +15,7 @@ const { pool } = require('../db');
 // ── Gemini model config ───────────────────────────────────────────────────────
 // gemini-2.0-flash-exp = latest, free, fast, very capable
 // gemini-1.5-flash      = fallback if 2.0 unavailable
-const GEMINI_MODEL = 'gemini-2.0-flash-exp';
+const GEMINI_MODEL = 'gemini-1.5-flash';
 const GEMINI_HOST  = 'generativelanguage.googleapis.com';
 
 // ── System instruction for Gemini ─────────────────────────────────────────────
