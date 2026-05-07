@@ -635,13 +635,13 @@ nav::-webkit-scrollbar{display:none}
 <div id="v-ai" class="view">
   <div class="sh">
     <div><div class="sh-t">AI Investigator</div><div class="sh-s">Claude AI with live database access — all 47 counties · real contracts</div></div>
-    <div class="tag tb">CLAUDE AI · LIVE DATA</div>
+    <div class="tag tb">GEMINI AI · LIVE DATA</div>
   </div>
   <div class="g64">
     <div class="card" style="padding:0;overflow:hidden">
       <div class="cwrap">
         <div class="cmsgs" id="ai-msgs">
-          <div class="cmsg a"><div class="cav">AI</div><div><div class="cbub"><strong>Habari!</strong> I'm KenyaWatch AI with live access to Kenya's full procurement database.<br><br>I can analyse contracts, investigate supplier networks, identify corruption patterns across all 47 counties, and tell you exactly what action to take.<br><br>What would you like to investigate?</div></div></div>
+          <div class="cmsg a"><div class="cav">AI</div><div><div class="cbub"><strong>Habari!</strong> I'm KenyaWatch AI — powered by <strong style="color:var(--accent)">Google Gemini</strong> with live access to Kenya's procurement database.<br><br>I can analyse contracts, detect fraud patterns, investigate supplier networks across all 47 counties, and tell you exactly what action to take.<br><br>What would you like to investigate?</div></div></div>
         </div>
         <div class="at-wrap" id="ai-typing">
           <div class="cav" style="background:var(--gdim);color:var(--gtext)">AI</div>
@@ -788,7 +788,7 @@ nav::-webkit-scrollbar{display:none}
 </button>
 <div id="kw-win">
   <div id="kw-hdr">
-    <div class="khl"><div class="kav">AI<div class="kon"></div></div><div><div class="kti">KenyaWatch AI</div><div class="ksu">Anti-Corruption Assistant · Online</div></div></div>
+    <div class="khl"><div class="kav">AI<div class="kon"></div></div><div><div class="kti">KenyaWatch AI</div><div class="ksu">Gemini AI · Anti-Corruption · Online</div></div></div>
     <div class="kacts">
       <button class="kbtn" onclick="kwClear()" title="Clear">🗑</button>
       <button class="kbtn" onclick="kwToggle()" title="Close">✕</button>
@@ -814,7 +814,7 @@ nav::-webkit-scrollbar{display:none}
       oninput="this.style.height='34px';this.style.height=Math.min(this.scrollHeight,88)+'px'"></textarea>
     <button id="kw-send" onclick="kwSend()"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
   </div>
-  <div id="kw-pwr">Powered by Anthropic Claude · KenyaWatch AI v3.1.0</div>
+  <div id="kw-pwr">Powered by Google Gemini · KenyaWatch AI v3.2.0</div>
 </div>
 
 <script>
@@ -991,7 +991,7 @@ async function loadDash(){
       el.innerHTML=`<div style="display:flex;flex-direction:column;gap:9px">
         <div style="display:flex;justify-content:space-between;font-size:13px"><span>Backend</span><span class="badge bh2">UNREACHABLE</span></div>
         <div style="font-size:11px;color:var(--red);font-family:'DM Mono',monospace">Cannot reach:<br>${API}</div>
-        <div style="font-size:11.5px;color:var(--t2);margin-top:4px;line-height:1.8">Fix in Railway:<br>1. Set <strong>DATABASE_URL</strong><br>2. Set <strong>ANTHROPIC_API_KEY</strong><br>3. Redeploy backend service</div>
+        <div style="font-size:11.5px;color:var(--t2);margin-top:4px;line-height:1.8">Fix in Railway:<br>1. Set <strong>DATABASE_URL</strong><br>2. Set <strong>GEMINI_API_KEY</strong><br>3. Redeploy backend service</div>
       </div>`;
     }else{
       const ok=h.status==='ok',db=h.database==='connected',ai=h.ai==='configured';
@@ -1000,8 +1000,8 @@ async function loadDash(){
         <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px"><span>Database</span><span class="badge ${db?'bl2':'bh2'}">${db?'CONNECTED':'DISCONNECTED'}</span></div>
         <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px"><span>AI Service</span><span class="badge ${ai?'bl2':'bm2'}">${ai?'READY':'NEEDS KEY'}</span></div>
         <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--t3);margin-top:2px">v${h.version||'3.1.0'}</div>
-        ${!db?'<div style="font-size:11px;color:var(--red)">⚠ Add DATABASE_URL in Railway → Variables</div>':''}
-        ${!ai?'<div style="font-size:11px;color:var(--amber)">⚠ Add ANTHROPIC_API_KEY in Railway → Variables</div>':''}
+        ${!db?'<div style="font-size:11px;color:var(--red)">⚠ Add DATABASE_URL in Render → Environment Variables</div>':''}
+        ${!ai?'<div style="font-size:11px;color:var(--amber)">⚠ Add GEMINI_API_KEY in Railway → Variables</div>':''}
       </div>`;
     }
   }catch{}
@@ -1403,4 +1403,4 @@ function showFb(el,msg,type){el.className='fb3 show '+(type==='g'?'fbg':'fbr');e
 loadDash();
 </script>
 </body>
-</html> 
+</html>
