@@ -140,4 +140,4 @@ app.listen(PORT, '0.0.0.0', () => {
       // Server stays up. /health stays 200. DB routes return 500 until reconnected.
       console.error('⚠  DB init failed:', e.message);
     });
-});
+}); 
