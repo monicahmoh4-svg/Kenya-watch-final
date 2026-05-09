@@ -393,7 +393,8 @@ nav::-webkit-scrollbar{display:none}
 .sync-h{font-family:'Montserrat',sans-serif;font-size:19px;font-weight:800;margin-bottom:4px}
 .sync-s{font-size:12.5px;color:rgba(255,255,255,.58);margin-bottom:18px;line-height:1.65}
 
-::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar{width:5px}
+@keyframes fadeInRight{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
 @media(max-width:600px){
   .hero{height:370px}.hero-h1{font-size:26px;letter-spacing:-1px}.hero-stats{gap:10px}.hs-n{font-size:24px}
@@ -1079,16 +1080,21 @@ async function loadGhost(){
 
       // Real Sentinel-2 thumbnail from Copernicus — shown when available
       // Fallback: curated HD satellite images of Kenya terrain from Unsplash
-      const kenyaFallbacks = {
-        ghost:   'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=600&q=85&auto=format&fit=crop',
-        partial: 'https://images.unsplash.com/photo-1617789160753-ec2957bec344?w=600&q=85&auto=format&fit=crop',
-        verified:'https://images.unsplash.com/photo-1562516155-e0d1ee0a9b0c?w=600&q=85&auto=format&fit=crop',
-      };
-      const thumb = p.sentinel_thumbnail || kenyaFallbacks[s] || kenyaFallbacks.ghost;
-      const imgSrc = thumb;
-      const isSentinel = !!p.sentinel_thumbnail;
-      const acquired = p.sentinel_acquired ? new Date(p.sentinel_acquired).toLocaleDateString('en-KE',{month:'short',year:'numeric'}) : '';
-      const cloudPct = p.sentinel_cloud_pct != null ? Math.round(p.sentinel_cloud_pct) + '% cloud' : '';
+      // Use real Google Maps satellite image URL from DB
+      // Falls back to ArcGIS World Imagery tile (also real satellite, no key needed)
+      const googleFallback = p.latitude && p.longitude
+        ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/15/'
+          + Math.floor((1-Math.log(Math.tan(parseFloat(p.latitude)*Math.PI/180)+1/Math.cos(parseFloat(p.latitude)*Math.PI/180))/Math.PI)/2*32768)
+          + '/' + Math.floor((parseFloat(p.longitude)+180)/360*32768)
+        : 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=600&q=85&auto=format&fit=crop';
+
+      const imgSrc = p.satellite_image_url || googleFallback;
+      const isSentinel = !!p.satellite_image_url;
+      const provider = p.satellite_provider || 'Satellite View';
+      const acquired = p.last_satellite_check
+        ? 'Updated ' + new Date(p.last_satellite_check).toLocaleDateString('en-KE',{month:'short',year:'numeric'})
+        : '';
+      const cloudPct = '';
 
       return`<div class="gpc">
         <div class="gpi" style="background:#000;height:160px;overflow:hidden;position:relative">
@@ -1398,6 +1404,56 @@ document.querySelectorAll('.mo').forEach(m=>m.addEventListener('click',e=>{if(e.
 
 // ══ FEEDBACK ═══════════════════════════════════════════════════════════════
 function showFb(el,msg,type){el.className='fb3 show '+(type==='g'?'fbg':'fbr');el.innerHTML=msg;}
+
+// ══ LIVE NOTIFICATIONS — Server-Sent Events ══════════════════════════════════
+(function initSSE(){
+  if (!window.EventSource) return;
+  try {
+    const es = new EventSource(API + '/api/notifications/stream');
+
+    es.addEventListener('new_contracts', function(e){
+      try {
+        const d = JSON.parse(e.data);
+        showLiveToast('📋 ' + d.message, 'success');
+        // Refresh stats and contracts table
+        if (typeof loadDash === 'function') loadDash();
+        const av = document.querySelector('.view.active');
+        if (av && av.id === 'v-procurement') loadC();
+      } catch(_){}
+    });
+
+    es.addEventListener('new_ghost_project', function(e){
+      try {
+        const d = JSON.parse(e.data);
+        showLiveToast('👻 ' + d.message, 'warning');
+        const av = document.querySelector('.view.active');
+        if (av && av.id === 'v-ghost') loadGhost();
+      } catch(_){}
+    });
+
+    es.addEventListener('new_report', function(e){
+      try {
+        const d = JSON.parse(e.data);
+        showLiveToast('🚨 ' + d.message, 'info');
+      } catch(_){}
+    });
+  } catch(_){}
+})();
+
+function showLiveToast(msg, type){
+  const bg = type==='success'?'#065f46':type==='warning'?'#92400e':'#1e3a8a';
+  const el = document.createElement('div');
+  el.style.cssText =
+    'position:fixed;top:68px;right:16px;z-index:9000;background:'+bg+';color:#fff;' +
+    'padding:11px 16px;border-radius:9px;font-size:13px;font-family:DM Sans,sans-serif;' +
+    'max-width:340px;box-shadow:0 4px 20px rgba(0,0,0,.25);display:flex;align-items:flex-start;' +
+    'gap:10px;line-height:1.5;animation:fadeInRight .3s ease';
+  el.innerHTML =
+    '<span style="flex:1">'+msg+'</span>' +
+    '<button onclick="this.parentNode.remove()" style="background:none;border:none;color:rgba(255,255,255,.7);cursor:pointer;font-size:18px;padding:0;line-height:1;flex-shrink:0">×</button>';
+  document.body.appendChild(el);
+  setTimeout(function(){ if(el.parentNode) el.remove(); }, 8000);
+}
 
 // ══ INIT ═══════════════════════════════════════════════════════════════════
 loadDash();
