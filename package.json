@@ -1,23 +1,22 @@
 {
   "name": "kenyawatch-ai",
-  "version": "3.2.0",
-  "description": "KenyaWatch AI — Anti-Corruption Intelligence Platform",
+  "version": "3.3.0",
+  "description": "KenyaWatch AI — Real-Time Anti-Corruption Intelligence Platform",
   "main": "Backend/server.js",
   "scripts": {
     "start": "node Backend/server.js",
-    "dev": "node Backend/server.js"
+    "dev":   "node Backend/server.js"
   },
   "engines": {
     "node": ">=18.0.0"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.20.1",
-    "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
-    "express": "^4.18.2",
+    "cors":               "^2.8.5",
+    "dotenv":             "^16.3.1",
+    "express":            "^4.18.2",
     "express-rate-limit": "^7.1.5",
-    "helmet": "^7.1.0",
-    "pg": "^8.11.3",
-    "uuid": "^9.0.0"
+    "helmet":             "^7.1.0",
+    "pg":                 "^8.11.3",
+    "uuid":               "^9.0.0"
   }
 }
