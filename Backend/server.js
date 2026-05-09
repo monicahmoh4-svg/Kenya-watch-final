@@ -90,14 +90,10 @@ app.get('/api/notifications/stream', (req, res) => {
   });
 });
 
-// ── Root ──────────────────────────────────────────────────────────────────────
-app.get('/', (_req, res, next) => {
-  // Only serve JSON if explicitly requesting API info, otherwise serve frontend
-  if (req.headers.accept && req.headers.accept.includes('application/json')) {
-    return res.json({ name: 'KenyaWatch AI', version: '3.3.0', status: 'running', admin: '/admin' });
-  }
-  next();
-});
+// ── Root — intentionally no GET / handler ────────────────────────────────────
+// The express.static(FRONTEND_DIR) below serves index.html for GET /
+// and GET * serves index.html for all other SPA routes.
+// Having a GET / handler here would intercept before static files load.
 
 // ── Dashboard stats ───────────────────────────────────────────────────────────
 app.get('/api/stats', async (_req, res) => {
