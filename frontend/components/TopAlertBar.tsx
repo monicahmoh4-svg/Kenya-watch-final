@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { AlertCircle, Ghost, TrendingUp } from 'lucide-react';
+import { AlertCircle, Ghost, TrendingUp, Activity } from 'lucide-react';
 
 interface Alert {
   id: string;
